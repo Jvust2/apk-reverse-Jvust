@@ -80,7 +80,7 @@ hardware.
 
 ```
 $ adb devices
-SSBYPJKFNVEU6PGA        device                            observed
+<DEVICE>                device                            observed
 ```
 
 **What happened.** An early version of the CLI contract test executed `coldstart.py` with its

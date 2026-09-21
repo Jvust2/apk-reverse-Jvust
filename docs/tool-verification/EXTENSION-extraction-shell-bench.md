@@ -406,7 +406,7 @@ $ python skills/apk-reverse/scripts/repack.py \
     --apksigner E:\tools\android-14\apksigner.bat \
     --zipalign E:\tools\android-14\zipalign.exe \
     --keytool "C:\Program Files\Java\jdk-17.0.4.1\bin\keytool.exe"
-[in ] E:\apk-reverse\tools\_work\bench\unpack\b4\ezAndroid.apk (2984841 bytes)
+[in ] tools/_work/bench\unpack\b4\ezAndroid.apk (2984841 bytes)
 [zip] - META-INF/1N0R.SF / 1N0R.RSA / MANIFEST.MF (signature artifact)
 [zip] unsigned written: 2828919 bytes
 [zip]   AndroidManifest.xml  STORED  offset=0x31
@@ -506,9 +506,10 @@ attributable to memory rather than to disk.
 - **No end-to-end FART splice.** The reference file's FART loop needs a live
   extraction-shell target; nothing in `repos/` is one (§1), and building an actively
   resisting shell is out of scope for this pass.
-- **A real APK build on this host.** `E:\tools\android-14` ships `d8`, `aapt2`,
+- **A real APK build on this host.** The build-tools directory ships `d8`, `aapt2`,
   `apksigner` and `zipalign` but **no `android.jar`**, and no `android.jar` exists
-  anywhere on the machine (searched `E:\tools`, `C:\Program Files`, `E:\Android`). Any
+  anywhere on the machine (searched the tool directories, `C:\Program Files`, and
+  the SDK path). Any
   `javac` against `android.*` fails with "package android.os does not exist". APKs can
   still be *repacked* here (`repack.py` does not recompile), which is why §4.4 works
   and the self-built-APK route in the task brief does not.

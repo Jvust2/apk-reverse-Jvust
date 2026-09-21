@@ -8,7 +8,7 @@ Strength labels follow `docs/tool-verification/README.md`: **observed** (the exa
 its output are reproduced here), **inferred** (follows from observed facts; the step itself was
 not executed), **unverified** (assumed or reported elsewhere and not independently confirmed).
 
-Reference environment: Windows 11 host, Python 3.14.0, repository at `E:\apk-reverse` on branch
+Reference environment: Windows 11 host, Python 3.14.0, repository root on branch
 `main`. **No device, no network and no target sample were involved** — this pass is entirely
 machine-local, because the thing worth measuring is what a scanner reports against a tree whose
 contents are already known. Every identifier in the fixture and in every transcript below is
@@ -44,13 +44,13 @@ a transcript pasted once:
 
 ```
 $ python tools/_work/leak-precedent/gen_fixtures.py
-wrote E:\apk-reverse\tools\_work\leak-precedent\fixture\planted\package.txt (411 bytes)
-wrote E:\apk-reverse\tools\_work\leak-precedent\fixture\planted\device.txt (218 bytes)
-wrote E:\apk-reverse\tools\_work\leak-precedent\fixture\planted\token.txt (261 bytes)
-wrote E:\apk-reverse\tools\_work\leak-precedent\fixture\planted\appkey.txt (212 bytes)
-wrote E:\apk-reverse\tools\_work\leak-precedent\fixture\planted\endpoint.txt (146 bytes)
-wrote E:\apk-reverse\tools\_work\leak-precedent\fixture\planted\path.txt (175 bytes)
-wrote E:\apk-reverse\tools\_work\leak-precedent\fixture\exempt\benign.txt (1396 bytes)
+wrote tools/_work/leak-precedent\fixture\planted\package.txt (411 bytes)
+wrote tools/_work/leak-precedent\fixture\planted\device.txt (218 bytes)
+wrote tools/_work/leak-precedent\fixture\planted\token.txt (261 bytes)
+wrote tools/_work/leak-precedent\fixture\planted\appkey.txt (212 bytes)
+wrote tools/_work/leak-precedent\fixture\planted\endpoint.txt (146 bytes)
+wrote tools/_work/leak-precedent\fixture\planted\path.txt (175 bytes)
+wrote tools/_work/leak-precedent\fixture\exempt\benign.txt (1396 bytes)
 == 7 fixture file(s) ==
 ```
 
@@ -269,7 +269,7 @@ found by running the scanner, not by reasoning about it.
 
 ```
 $ python skills/apk-reverse/scripts/scan_leaks.py                # first run
-== leak scan: 118 file(s) scanned under E:\apk-reverse ==
+== leak scan: 118 file(s) scanned under the repository root ==
    findings by category: device=4, endpoint=20, package=4
 == result: 28 finding(s) ==            RESULT=leaks_found   (exit 1)
 ```
@@ -297,7 +297,7 @@ Inherited state, reproduced at the start of this pass (same tree, before the §3
 
 ```
 $ python skills/apk-reverse/scripts/scan_leaks.py
-== leak scan: 128 file(s) scanned under E:\apk-reverse ==
+== leak scan: 128 file(s) scanned under the repository root ==
    findings by category: appkey=2, device=12, endpoint=14, package=5, path=3, token=4
 == result: 40 finding(s) -- each one is a line to look at, not a verdict ==
 RESULT=leaks_found        (exit 1)
@@ -317,7 +317,7 @@ $ python skills/apk-reverse/scripts/scan_leaks.py --quiet
 RESULT=leaks_found_strong_only        (exit 0)
 
 $ python skills/apk-reverse/scripts/scan_leaks.py
-== leak scan: 129 file(s) scanned under E:\apk-reverse ==
+== leak scan: 129 file(s) scanned under the repository root ==
    findings by category: endpoint=4
 
   skills/apk-reverse/references/desensitization-and-leak-scans.md:81:10  [endpoint/weak]  plain_addr_ipliteral
@@ -383,7 +383,7 @@ $ python skills/apk-reverse/scripts/scan_leaks.py --root tools/_work/leak-preced
 RESULT=leaks_found  (exit 1)
 
 $ python skills/apk-reverse/scripts/scan_leaks.py --root tools/_work/nope-not-here
-error: root does not exist: E:\apk-reverse\tools\_work\nope-not-here     [stderr]
+error: root does not exist: tools/_work/nope-not-here     [stderr]
 RESULT=error        (exit 2)
 
 $ python skills/apk-reverse/scripts/scan_leaks.py --only nope

@@ -233,3 +233,73 @@ evidentiary gap F5 describes, and the repository's rule that nothing ships unrun
 much as to code. It is dependency-free (stdlib only) so it reproduces on a machine with no Android
 toolchain, which is the machine the defect was found on. It carries no target data: the dex is
 synthesised from constants in the file.
+
+## Maintenance pass: the path audit's signal, three path families, and a corpus note
+
+An external review found the repository in good shape on evidence and honesty but raised three
+concrete defects. All three are fixed here; the fourth item is a measurement added so the next
+pass can see what this one could not.
+
+### 1. `build_scripts.py` reported 37 findings, most of them noise
+
+The audit matched **any** `X:\...` literal, so `C:\Program Files\...`, `C:\Python314\...` and
+literal placeholders like `<user>` all counted as "machine-specific leftovers". A gate whose output
+is mostly noise stops being read, which is the same failure `scan_leaks.py` names when it refuses to
+exempt the RFC 5737 documentation ranges.
+
+Added two explicit, auditable exemption families rather than a looser regex:
+
+- `GENERIC_PATH_PREFIXES` — install locations that exist on every host of that platform
+  (`Program Files`, `Python*`, `MinGW`, `/usr/`, `/opt/`, ...).
+- `_leaks_nothing()` — also exempts an already-redacted path, i.e. one carrying a placeholder or an
+  ellipsis, because that mark means a normalisation pass already ran.
+
+**One trap had to be handled explicitly.** `BARE_ABS` stops at whitespace, so a real
+`C:\Program Files\...` arrives as the truncated `C:\Program`; a one-directional `startswith` misses
+the exemption. The comparison is therefore bidirectional, gated by a minimum length so a short drive
+prefix cannot become a blanket pass. The same function needed a second correction: with a lookahead
+of only `[a-z0-9]`, the optional `\\?` backtracks to the empty string, the next character is the
+separator, it passes, and a real personal path is swallowed — the lookahead must exclude the
+separator too.
+
+### 2. Three absolute paths left on the published surface
+
+`EXTENSION-desensitization.md`, `EXTENSION-extraction-shell-bench.md` and `EXTENSION-vmp-diff.md`
+quoted a workbench root, a tool jar and an SDK location as absolute paths. `docs/tool-verification/`
+already states the rule (§**Workbench paths are an operation record, not a pointer**): the record
+may say a run happened at a `tools/...` path, written relatively. The three files were made to match
+the rule they were already under; the tool-jar and SDK cases were rephrased rather than
+placeholder-ised, so no reader has to learn a new token.
+
+### 3. `check_budget.py` could not see corpus growth
+
+The gate budgets the always-loaded part and was silently blind to the other half of the problem: a
+new reference costs exactly **one index line**, so the corpus can double while the narrative count
+stays green. Two note-level thresholds now report it. Notes, not failures — a large corpus is a
+choice; a growth nobody measured is the defect.
+
+### A cross-tool inconsistency this pass ran into
+
+`build_scripts.py` now exempts any `<...>` placeholder; `scan_leaks.py` recognises a **fixed token
+list** (`<user>`, `<name>`, `<path>`, ...). An invented placeholder in a source comment —
+`<someone>` — therefore passed the first and was read by the second as the very personal name its
+`user_path_windows` rule exists to catch, turning `check_repo.py` red. That is by design rather than
+a bug (a strict list is what stops `<realname>` hiding a real one), but the two tools disagree about
+what "already redacted" means, and the disagreement is invisible until someone writes a new
+placeholder. The fix here was to rephrase the comment; a future pass may want a shared token list.
+
+### Verification
+
+- `build_scripts.py` **37 → 0** findings on a clean clone, exit 0 (was exit 2). The generic-install
+  hits (`C:\MinGW\bin\gcc.exe`, `C:\Python314\...`, `C:\Program`) no longer report; the real ones
+  (`E:\apk-reverse\...`, `E:\agb_apktool.jar`) did, and were fixed in the documents, not by widening
+  the list.
+- A purpose-written case table pins **both** directions — 18 cases, 0 failures: generic and
+  already-redacted paths are exempt, while a real workbench path, a real personal name after
+  `C:\Users\`, a real POSIX home and a real project path still report. Two defects in the first
+  implementation were found by that table, not by the audit run.
+- All four gates pass: `check_repo.py` 0 problem, `check_refs.py` 0 dangling / 0 warning,
+  `check_budget.py` 0 failure / 0 warning / 3 notes, `build_scripts.py` 0 findings.
+- `check_budget.py` now reports the corpus explicitly: **47 references + 55 scripts = 102 files,
+  31,423 lines**, past the 26,000-line note threshold — the figure this pass could not see before.
+

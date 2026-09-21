@@ -39,6 +39,10 @@ What is measured, and why each measure is shaped the way it is:
      load. This reports the ratio of hedging phrases to imperative ones as a *trend*, and lists the
      hedged lines it found, so a human can decide -- the gate cannot judge whether a given sentence
      should be optional.
+  7. **Corpus size** (a note, never a failure). The checks above govern what every task *loads*; this
+     reports what the repository *carries*. The first cannot see the second: a new reference costs
+     exactly one index line, so the corpus can double while the always-loaded count stays green. A
+     large corpus is a choice; a growth nobody measured is the defect.
 
 Usage:
     python check_budget.py            # report; exit 1 if a hard limit is exceeded
@@ -71,6 +75,8 @@ INDEX_ROW_SOFT = 250          # chars of description per row
 INDEX_ROW_HARD = 400          # a row longer than this is a paragraph, not an index entry
 INDEXES = ('Symptom index', 'Reference index', 'Script index')
 NAV_LINES = 100               # above this, a reference must open navigably
+CORPUS_FILES_NOTE = 110       # references + scripts, reported as a note past this
+CORPUS_LINES_NOTE = 26000     # total lines across the same corpus, same treatment
 # A navigable head: one of these must appear in the first NAV_HEAD_LINES lines.
 NAV_HEAD_LINES = 40
 HEDGE_RE = re.compile(
@@ -276,6 +282,44 @@ def check_discoverable():
     return out
 
 
+def check_corpus():
+    """Report corpus size so growth is visible instead of discovered late.
+
+    Contributed on this repository while the checks above were being rewritten. Kept as its own
+    function and its own note: it measures what the repository *carries*, which is a different
+    quantity from what a task loads, and collapsing the two would let a growing corpus hide behind a
+    green always-loaded count.
+    """
+    refs = sorted(glob.glob(os.path.join(REFS, '**', '*.md'), recursive=True))
+    scripts = sorted(p for p in glob.glob(os.path.join(SKILL_DIR, 'scripts', '**', '*'), recursive=True)
+                     if os.path.isfile(p))
+
+    def count(paths):
+        total = 0
+        for p in paths:
+            try:
+                with open(p, encoding='utf-8', errors='replace') as fh:
+                    total += sum(1 for _ in fh)
+            except OSError:
+                pass
+        return total
+
+    ref_lines, script_lines = count(refs), count(scripts)
+    n_files = len(refs) + len(scripts)
+    lines_total = ref_lines + script_lines
+
+    notes = ['corpus: %d references + %d scripts = %d files, %d lines total'
+             % (len(refs), len(scripts), n_files, lines_total)]
+    if n_files > CORPUS_FILES_NOTE:
+        notes.append('corpus is %d files, past the %d-file note threshold -- every entry costs an '
+                     'index line and a share of the maintenance surface, so confirm the new ones are '
+                     'load-bearing rather than merely adjacent' % (n_files, CORPUS_FILES_NOTE))
+    if lines_total > CORPUS_LINES_NOTE:
+        notes.append('corpus is %d lines, past the %d-line note threshold'
+                     % (lines_total, CORPUS_LINES_NOTE))
+    return notes
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -288,7 +332,7 @@ def main():
     findings += check_index_rows(lines)
     findings += check_discoverable()
     findings += check_navigable()
-    notes = check_restated() + check_hedging()
+    notes = check_restated() + check_hedging() + check_corpus()
 
     if args.json:
         print(json.dumps({

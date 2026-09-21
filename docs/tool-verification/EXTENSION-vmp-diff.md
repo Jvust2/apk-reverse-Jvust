@@ -53,8 +53,8 @@ D8 8.2.2-dev (build facedf41bbd28b563d1e9e09c5f72d7c5ca598d8 from go/r8bot (luci
 
 Two further tool facts worth recording, both **observed**:
 
-- **`E:\agb_apktool.jar` does not exist**, so `E:\tools\bin\apktool.bat` (which is
-  `java -jar "E:\agb_apktool.jar" %*`) resolves to nothing. apktool is unavailable on this
+- **The apktool jar the wrapper points at does not exist**, so `<tools>\bin\apktool.bat` (which is
+  `java -jar "<tools>\agb_apktool.jar" %*`) resolves to nothing. apktool is unavailable on this
   machine, and a bare `apktool d` fails with a jar-not-found error rather than a
   recognisable "tool missing" message.
 - `javac` is on PATH only through the Oracle `javapath` forwarder; the real JDK is at

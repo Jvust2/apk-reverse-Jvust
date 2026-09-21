@@ -292,7 +292,46 @@ Defect 1 is the instructive one: a checker whose parser silently shortens a comm
 for exactly the inputs it was written to reject, and nothing in its own output looks wrong. The
 defence is not more careful reading, it is a fixture that is known to be bad.
 
-### 2.6 What this check does not cover
+### 2.6 A second blind spot, found by a reviewer reading this gate's output
+
+A reviewer reported seven "drifting" commands. Reproducing them split the report three ways, and the
+middle category is the one worth reading.
+
+**Not reproducible.** `python tests/run_tests.py -q` runs: `run_tests.py` forwards what it is given
+to pytest (`args = list(argv[1:]) or ["-q"]`), and its usage block documents exactly that. `dcc.py`
+is written as `cd tools/_work/bench/repos/dcc` then `python dcc.py ...` — an external checkout, not a
+script this repository ships.
+
+**Real, and fixed.** Seven commands in two evidence records named a **workbench** script with no path
+at all (`$ python analyze_pair.py`, `b2_measure.py`, `ttd_attach.py`, `make_skeleton.py`). Those files
+exist under `tools/`, which `.gitignore` excludes, so a reader copying the command from the
+repository root gets `No such file`. Two of those documents wrote the correct path elsewhere, so they
+disagreed with themselves.
+
+**The part that matters: this gate had been scoring those `ok`.** `resolve_script()` tried the
+*document's own directory* first, so a bare `analyze_pair.py` inside `docs/tool-verification/`
+resolved to `tools/_work/bench/unpack/b3/analyze_pair.py` — a real file — and passed. The fix is not
+a stricter regex but a corrected resolution order plus a corrected classification:
+
+1. Resolution now follows the order a **reader** would try: repository root, then the skill's script
+   directory, then the document's own directory (which is what `../x.py` in a nested README means).
+2. A bare name that only resolves under `tools/` is `unqualified-workbench`, and it counts as
+   **drift, not a skip** — a one-token fix that a reader cannot run. A first attempt classified it as
+   a low-confidence warning, which would have left all seven in place.
+3. The one honest exception is pinned too: a block that opens with `cd tools/_work/bench/repos/dcc`
+   tells the reader where to stand, so a bare `python dcc.py` after it is correct. That is skipped as
+   `workbench-after-cd`.
+
+**Two defects of this pass's own, found while fixing it.** A `--json` run printed the `RESULT=` token
+*after* the JSON document, so `--json | jq` failed with `Extra data`; the token is gone from that path
+and the status is a field in the document instead. And the fix's own substitution left four literal
+backslashes before `$` in the two files — a reader would have copied them.
+
+`tests/integration/test_check_commands_gate.py` pins the resolution order, the drift classification,
+the `cd` exception, and a clean pass over the committed tree, so this blind spot cannot return
+silently.
+
+### 2.7 What this check does not cover
 
 - It validates **flags and (weakly) positional counts**, not semantics. A command with correct flags
   and a wrong path still passes; so does a documented `--duration 14` where the useful value is

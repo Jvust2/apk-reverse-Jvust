@@ -485,9 +485,13 @@ def documented_commands(text):
     for idx, raw in enumerate(lines, 1):
         if FENCE_RE.match(raw):
             if in_fence:
+                # Whether an earlier line in the same block changed directory. A block that opens
+                # with `cd tools/_work/bench/repos/dcc` tells the reader where to stand, so a bare
+                # `python dcc.py` after it is correct -- and must not be reported as unqualified.
+                chdir = any(re.match(r'\s*(\$\s*)?cd\s+\S', ln) for ln in block)
                 for off, cmd in enumerate(join_continuations(block)):
                     for sub in split_shell(cmd):
-                        yield (block_start + off, sub)
+                        yield (block_start + off, sub, chdir)
                 block, in_fence = [], False
             else:
                 in_fence, block, block_start = True, [], idx + 1
@@ -499,7 +503,7 @@ def documented_commands(text):
             body = m.group(1).strip()
             if body.startswith(('python ', 'python3 ', 'py ')):
                 for sub in split_shell(body):
-                    yield (idx, sub)
+                    yield (idx, sub, True)     # an inline mention has no block context to honour
 
 
 def find_script_token(tokens):
@@ -541,8 +545,20 @@ def _workbench_names():
     return _WORKBENCH_INDEX['names']
 
 
-def resolve_script(token, doc_path, include_workbench):
-    """Where a documented script path points, or why it cannot be followed."""
+def resolve_script(token, doc_path, include_workbench, chdir=False):
+    """Where a documented script path points, or why it cannot be followed.
+
+    The order matters, and getting it wrong made this gate blind to a real class of drift: an
+    earlier revision resolved a relative path against the **document's own directory first**. A
+    bare `python analyze_pair.py` written inside `docs/tool-verification/` therefore resolved to
+    `tools/_work/bench/.../analyze_pair.py` -- a real file, hidden behind a gitignored directory --
+    and was scored `ok`. A reader who copies that command from the repository root gets
+    "No such file", which is the failure this gate exists to prevent.
+
+    So the roots are tried in the order a reader would: repository root, then the skill's script
+    directory, and only then the document's own directory (which is what `../x.py` in a nested
+    README legitimately means). A hit under `tools/` is a workbench artifact either way.
+    """
     norm = token.replace('\\', '/')
     if '...' in norm:
         # `python .../vmp_diff_harness.py compare ...`: the record elides the path on
@@ -552,27 +568,30 @@ def resolve_script(token, doc_path, include_workbench):
     if os.path.isabs(token):
         cands.append(token)
     else:
-        # relative to the document that wrote it, which is how `../x.py` in a nested
-        # README reads; the repository-rooted and skill-rooted forms follow
-        cands.append(os.path.join(os.path.dirname(doc_path), norm))
         cands.append(os.path.join(ROOT, norm))
         if not norm.startswith('skills/'):
             cands.append(os.path.join(SKILL_DIR, norm))
         if not norm.startswith(('skills/', 'scripts/')):
             cands.append(os.path.join(SCRIPT_DIR, norm))
+        cands.append(os.path.join(os.path.dirname(doc_path), norm))
     for c in cands:
         if os.path.isfile(c):
             real = os.path.realpath(c)
             tools_root = os.path.realpath(os.path.join(ROOT, 'tools')) + os.sep
             if real.startswith(tools_root) and not include_workbench:
-                # reached by `../../tools/_work/...`: still a workbench artifact, and
-                # `.gitignore` excludes tools/, so a reader cannot open it either
+                # reached by `../../tools/_work/...`, or by a bare name that only exists there:
+                # still a workbench artifact, and `.gitignore` excludes tools/, so a reader who
+                # copies the command cannot open it
                 return None, 'workbench'
             return real, 'ok'
     if norm.startswith('tools/') or '/tools/' in norm:
         return None, 'workbench'
     if '/' not in norm and not include_workbench and norm in _workbench_names():
-        return None, 'workbench'
+        if chdir:
+            # The enclosing block already told the reader where to stand, so the bare name is
+            # correct. Reported as a skip rather than drift, and distinguishable in the summary.
+            return None, 'workbench-after-cd'
+        return None, 'unqualified-workbench'
     if norm in EXTERNAL_SCRIPTS:
         return None, 'external'
     return None, 'missing-script'
@@ -607,7 +626,7 @@ def _allowed_positionals(spec):
 def command_findings(doc_path, text, spec_cache, include_workbench):
     findings = []
     doc_rel = os.path.relpath(doc_path, ROOT)
-    for line_no, cmd in documented_commands(text):
+    for line_no, cmd, chdir in documented_commands(text):
         cmd = cmd.strip()
         if not cmd:
             continue
@@ -634,9 +653,23 @@ def command_findings(doc_path, text, spec_cache, include_workbench):
             continue
 
         token = tokens[idx]
-        path, why = resolve_script(token, doc_path, include_workbench)
+        path, why = resolve_script(token, doc_path, include_workbench, chdir)
         if path is None:
-            if why.startswith('workbench'):
+            if why == 'unqualified-workbench':
+                # A bare `python analyze_pair.py` where that name only exists under `tools/`.
+                # Reported as **drift, not a skip**: the reader who copies it from the repository
+                # root gets "No such file", and the fix is one path qualifier. This class was
+                # invisible until the resolver stopped preferring the document's own directory --
+                # the file existed *somewhere*, so the command scored `ok`.
+                kind = 'drift'
+                findings.append({'doc': doc_rel, 'line': line_no, 'command': cmd,
+                                 'kind': 'unqualified-workbench', 'script': token,
+                                 'suggest': ['a path that resolves from the repository root, e.g. '
+                                             '`tools/.../%s`' % token],
+                                 'detail': 'bare script name that only exists under tools/ '
+                                           '(gitignored): a reader cannot run it'})
+                continue
+            if why == 'workbench':
                 kind = 'workbench'
             elif why == 'external':
                 kind = 'external'
@@ -867,7 +900,11 @@ def main(argv=None):
         print('RESULT=%s' % TOKENS['internal'])
         return EXIT_INTERNAL
 
-    drift = [f for f in all_findings if f['kind'] in ('unknown-flag', 'missing-script')]
+    # `unqualified-workbench` counts as drift: the command names a script that only exists under a
+    # gitignored directory and gives no path, so a reader who copies it fails. It is a one-token fix,
+    # which is exactly why it should be reported rather than skipped.
+    drift = [f for f in all_findings
+             if f['kind'] in ('unknown-flag', 'missing-script', 'unqualified-workbench')]
     warnings = [f for f in all_findings if f['kind'] == 'warning']
     unverifiable = [f for f in all_findings if f['kind'] == 'unverifiable']
     workbench = [f for f in all_findings if f['kind'] == 'workbench']
@@ -914,7 +951,9 @@ def main(argv=None):
             'findings': all_findings,
         }
         print(json.dumps(payload, indent=2, ensure_ascii=False))
-        print('RESULT=%s' % token)
+        # No `RESULT=` line here on purpose: appending one would make the stream invalid JSON for a
+        # caller doing `| jq .` or `json.loads(stdout)`, which is the entire point of `--json`. The
+        # status is a field in the document, and the exit code carries the same meaning.
         return code
 
     if args.fix_report:

@@ -427,7 +427,7 @@ for the OK button.
 needs:
 
 ```
-$ python ttd_attach.py --package <PKG> --activity sg.vantagepoint.uncrackable3.MainActivity \
+$ python tools/_work/bench/l1l3/ttd_attach.py --package <PKG> --activity sg.vantagepoint.uncrackable3.MainActivity \
       --js l3_read_crc.js --launch-delay 1.5 --seconds 20
 [i] pre-attach main pid=7020 at 1.88s
 [i] attached at +0.00s (probe loaded)
@@ -523,7 +523,7 @@ the expected original bytes before each write.
 Patched condition:
 
 ```
-$ python b2_measure.py --js l3_hook_patch_v2.js --tag PATCHED --probe-seconds 25
+$ python tools/_work/bench/l1l3/b2_measure.py --js l3_hook_patch_v2.js --tag PATCHED --probe-seconds 25
 [i] spawned pid=10000 (paused)
 [i] resumed pid=10000
 [0.04s][i] libfoo.so base=0x764b89d000 size=90112
@@ -545,7 +545,7 @@ I/Zygote( 1007): Process 10000 exited due to signal 6 (Aborted)
 Control condition (identical reads and writes, original bytes written back):
 
 ```
-$ python b2_measure.py --js l3_hook_control_v2.js --tag control_v2 --probe-seconds 22
+$ python tools/_work/bench/l1l3/b2_measure.py --js l3_hook_control_v2.js --tag control_v2 --probe-seconds 22
 [0.04s][CONTROL] 0x2ff0 unchanged (wrote back 40 1a 80 52 c0 03 5f d6)
 [0.04s][CONTROL] 0x2ff8 unchanged (wrote back c0 0c 80 52 c0 03 5f d6)
 [0.04s][CONTROL] 0x3080 unchanged (wrote back fd 7b bf a9 fd 03 00 91)

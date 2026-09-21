@@ -44,7 +44,7 @@ A byte diff of the pair (`tools/_work/bench/unpack/b3/analyze_pair.py`) locates 
 difference:
 
 ```
-$ python analyze_pair.py
+$ python tools/_work/bench/unpack/b3/analyze_pair.py
 len A=12536 len B=12536
 first diff offset = 8 (0x8)
 diff byte count = 6
@@ -83,7 +83,7 @@ the tail is nop-filled, so offsets, class table and string table are untouched a
 header is re-fixed with `dexutil.fix_dex_header` (signature first, checksum last).
 
 ```
-$ python make_skeleton.py src-r2pay.dex skel
+$ python tools/_work/bench/unpack/b3/make_skeleton.py src-r2pay.dex skel
 source: src-r2pay.dex
   ctrl.dex           fraction=0.00 mode=return   emptied=0/5061
   skel-25.dex        fraction=0.25 mode=return   emptied=1265/5061

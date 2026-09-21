@@ -31,6 +31,12 @@ import os
 import subprocess
 import sys
 
+try:
+    import device_shell as _shell          # same directory as this script
+except ImportError:                        # run from the repository root instead
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    import device_shell as _shell
+
 DEFAULT_ADB = 'adb'
 DEFAULT_SERIAL = None
 
@@ -82,23 +88,37 @@ def main():
 
     mode = argv[0]
 
-    if mode == 'dev':
-        rc, out = run(adb, None, ['devices', '-l'])
-    elif mode in ('sh', 'shell'):
-        rc, out = run(adb, serial, ['shell', argv[1]])
-    elif mode == 'su':
-        cmd = argv[1].replace('"', '\\"')
-        rc, out = run(adb, serial, ['shell', 'su -c "%s"' % cmd])
-    elif mode == 'suf':  # read a device text file
-        cmd = argv[1].replace('"', '\\"')
-        size = argv[2] if len(argv) > 2 else '6000'
-        rc, out = run(adb, serial, ['shell', 'su -c "head -c %s %s"' % (size, cmd)])
-    elif mode == 'pull':
-        rc, out = run(adb, serial, ['pull', argv[1], argv[2]])
-    elif mode == 'push':
-        rc, out = run(adb, serial, ['push', argv[1], argv[2]])
-    else:
-        print(__doc__)
+    try:
+        if mode == 'dev':
+            rc, out = run(adb, None, ['devices', '-l'])
+        elif mode in ('sh', 'shell'):
+            rc, out = run(adb, serial, ['shell', argv[1]])
+        elif mode == 'su':
+            # POSIX single-quote quoting, via the shared module. The previous form escaped only double
+            # quotes, so `;`, `$( )` and backticks still reached the device shell as syntax -- and this
+            # helper sits directly under an agent's hands. See scripts/device_shell.py.
+            rc, out = run(adb, serial, ['shell', _shell.su_wrap([argv[1]])])
+        elif mode == 'suf':  # read a device text file
+            # `suf` interpolates a path and a byte count into a device command, so both are validated:
+            # a path with a space or a metacharacter is refused here rather than mangled on the device.
+            path = _shell.validate_device_path(argv[1])
+            size = argv[2] if len(argv) > 2 else '6000'
+            if not size.isdigit():
+                print('suf: size must be a decimal byte count, got %r' % size, file=sys.stderr)
+                return 2
+            rc, out = run(adb, serial, ['shell', _shell.su_wrap(['head', '-c', size, path])])
+        elif mode == 'pull':
+            rc, out = run(adb, serial, ['pull', argv[1], argv[2]])
+        elif mode == 'push':
+            rc, out = run(adb, serial, ['push', argv[1], argv[2]])
+        else:
+            print(__doc__)
+            return 2
+    except _shell.Refused as exc:
+        # A malformed device value is a usage error (2): distinguishable by a caller from "the device
+        # said no" (1) and from a defect in this tool (4). Never a traceback.
+        print('refused: %s' % exc, file=sys.stderr)
+        print('RESULT=refused')
         return 2
 
     sys.stdout.write(out)

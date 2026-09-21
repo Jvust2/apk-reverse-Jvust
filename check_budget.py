@@ -1,31 +1,44 @@
 #!/usr/bin/env python3
-"""Budget gate for the apk-reverse skill: keep the always-loaded part from creeping.
+"""Budget and shape gate for the apk-reverse skill: keep the always-loaded part from creeping,
+and keep the long parts navigable.
 
 `check_repo.py` proves the repository is *consistent* (paths resolve, indexes are complete).
-This proves it is not *bloating*. Those are different failures, and the second has no natural
-counter-pressure: every pass adds a reference, an index row and a coverage claim, and nothing in
-the repository notices.
+This proves it is not *bloating*, and that a reader can find their way into a long file. Those are
+different failures, and the second has no natural counter-pressure: every pass adds a reference, an
+index row and a coverage claim, and nothing in the repository notices.
 
 What is measured, and why each measure is shaped the way it is:
 
-  1. **Content lines vs index lines.** An index row is the price of discoverability: one line per
-     bundled file, and this skill ships 38 references and 48 scripts, so ~100 of its lines are
-     structural. Counting them against a prose budget would push the skill to drop files it needs,
-     so the budget applies to the *narrative* lines — rules, workflow, gates, classification —
-     which is the part that actually competes for attention. Anthropic's Agent Skills guidance
-     says "keep SKILL.md under 500 lines"; its own `skill-creator` ships 480 and `mcp-builder` 237.
-     Here the narrative budget is 460, and the total is reported for context, not as a verdict.
-  2. **Index row length.** The index tables are the largest part of SKILL.md and the easiest to
+  1. **The always-loaded part, in tokens rather than lines.** A skill's whole `SKILL.md` body loads
+     into context when the skill activates (agentskills.io/specification, "Progressive disclosure"),
+     so every line of it competes for attention -- **including the index tables**. An earlier version
+     of this gate subtracted the index lines from the budget, which made the number look better than
+     the context actually is: 150 index lines are still 150 lines the model reads. The budget is now
+     measured on the whole file, reported in lines *and* estimated tokens, with the index share
+     reported for context rather than credited against the budget.
+     Line counts are kept because they are the number a human can check by hand; the token estimate
+     is `characters / 4`, which is crude and stated as crude -- it is a trend indicator, not a
+     measurement of a specific tokenizer.
+  2. **Index row length.** The index tables are the largest part of `SKILL.md` and the easiest to
      grow by accident: each new entry is written by someone who knows the detail, and the detail
      lands in the row. An index row says *when to load the file*; the file says what is in it.
   3. **Restated conclusions** (reported as notes, never as failures). A conclusion legitimately
-     appears in the benchmark matrix, in the evidence record, and in the coverage statement —
+     appears in the benchmark matrix, in the evidence record, and in the coverage statement --
      those three exist to state results. The check flags a concept that has spread *beyond* those
-     homes, because that is when a future correction has to hunt for every copy. It is a note
-     rather than a failure precisely because the three legitimate homes make a high count normal.
+     homes, because that is when a future correction has to hunt for every copy.
   4. **Reference discoverability.** Every reference must be reachable from SKILL.md or nothing will
      ever load it. (`check_repo.py` also enforces this; the duplication is deliberate, because a
      dead reference is invisible in a way a broken path is not.)
+  5. **Long-file navigability.** A file over `NAV_LINES` that a reader cannot skim is a file they
+     will not load. Each one must open with a navigable head -- a "what this answers" line and
+     either a table of contents or a "when to load" line -- so the decision to read further can be
+     made from the top. This is the check that keeps "file-level progressive disclosure" from
+     becoming a claim the repository makes but does not implement.
+  6. **Instruction strength** (a note, never a failure). The repository's rules are meant to be
+     followed, not weighed: a rule phrased as "consider X" reads as optional and is skipped under
+     load. This reports the ratio of hedging phrases to imperative ones as a *trend*, and lists the
+     hedged lines it found, so a human can decide -- the gate cannot judge whether a given sentence
+     should be optional.
 
 Usage:
     python check_budget.py            # report; exit 1 if a hard limit is exceeded
@@ -44,11 +57,25 @@ SKILL_DIR = os.path.join(ROOT, 'skills', 'apk-reverse')
 SKILL = os.path.join(SKILL_DIR, 'SKILL.md')
 REFS = os.path.join(SKILL_DIR, 'references')
 
-CONTENT_LINES_OK = 460        # narrative budget
+CONTENT_LINES_OK = 460        # always-loaded lines: soft ceiling, warns above this
 CONTENT_LINES_HARD = 560      # past this, something is structurally wrong
+# Token budget for the always-loaded body. Calibrated here rather than copied: the Agent Skills
+# spec recommends roughly 5,000 tokens of *instructions*, and this skill deliberately exceeds it,
+# because the two things it will not move out of the always-loaded body are the symptom index
+# (~54 rows; "symptom -> file" is the one lookup that must stay one hop) and the four gates with
+# their pass criteria. The budget therefore tracks whether the body is *growing past what the
+# design requires*, and the number is reviewed against a real tokenizer (see token_estimate).
+TOKEN_SOFT = 13000
+TOKEN_HARD = 16000
 INDEX_ROW_SOFT = 250          # chars of description per row
 INDEX_ROW_HARD = 400          # a row longer than this is a paragraph, not an index entry
 INDEXES = ('Symptom index', 'Reference index', 'Script index')
+NAV_LINES = 100               # above this, a reference must open navigably
+# A navigable head: one of these must appear in the first NAV_HEAD_LINES lines.
+NAV_HEAD_LINES = 40
+HEDGE_RE = re.compile(
+    r'\b(consider|considering|you may|you might|might want|optionally|prefer(?:ably)?|'
+    r'it is worth|feel free|if you like|tends to be better)\b', re.I)
 
 # Concepts that have been restated once already. Reported, not enforced -- see the docstring.
 RESTATED = {
@@ -59,14 +86,19 @@ RESTATED = {
     'ezAndroid is JNI sinking, not a VMP': [r'JNI sinking'],
     'KernelSU userspace cannot change a syscall': [r'userspace module.{0,60}cannot change'],
     'protobuf proto3 explicit zero': [r'proto3.{0,40}(?:explicit )?zero'],
+    'armv7 AOT strings are UTF-8, not UTF-16': [r'armv7.{0,80}UTF-8', r'UTF-8.{0,80}armv7'],
 }
 # Documents whose job is to state results; a concept appearing here is not drift.
 LEGITIMATE_HOMES = ('tests/benchmark.md', 'docs/tool-verification/')
 
 
-def skill_lines():
-    with open(SKILL, encoding='utf-8') as fh:
+def read_lines(path):
+    with open(path, encoding='utf-8') as fh:
         return fh.read().splitlines()
+
+
+def skill_lines():
+    return read_lines(SKILL)
 
 
 def index_rows(lines):
@@ -94,20 +126,50 @@ def index_rows(lines):
     return n, long_rows
 
 
+def token_estimate(text):
+    """Token count for the always-loaded body.
+
+    Uses `tiktoken` (cl100k_base) when it happens to be installed, because a real measurement beats
+    an estimate everywhere in this repository -- including in this file. Otherwise falls back to
+    `characters / 3.6`, which was *calibrated against that measurement* on this file (69,143 chars
+    -> 17,144 tokens) rather than guessed; markdown-heavy prose tokenizes worse per character than
+    the usual /4 rule of thumb.
+    """
+    try:
+        import tiktoken
+        return len(tiktoken.get_encoding('cl100k_base').encode(text)), 'tiktoken/cl100k_base'
+    except Exception:
+        return int(len(text) / 3.6), 'estimate chars/3.6'
+
+
 def check_size(lines):
     n_idx, _ = index_rows(lines)
-    content = len(lines) - n_idx
-    if content <= CONTENT_LINES_OK:
-        lv, msg = 'ok', 'SKILL.md %d narrative lines + %d index lines = %d total (budget %d narrative)' % (
-            content, n_idx, len(lines), CONTENT_LINES_OK)
-    elif content <= CONTENT_LINES_HARD:
-        lv, msg = 'warn', ('SKILL.md narrative is %d lines, over the %d budget by %d (%d index lines '
-                           'excluded). Move detail into references/ and leave a pointer.' %
-                           (content, CONTENT_LINES_OK, content - CONTENT_LINES_OK, n_idx))
+    content = len(lines)
+    text = '\n'.join(lines)
+    toks, how = token_estimate(text)
+    pct_idx = (100.0 * n_idx / content) if content else 0.0
+
+    findings = []
+    if content <= CONTENT_LINES_OK and toks <= TOKEN_SOFT:
+        msg = ('SKILL.md %d lines (%d index = %.0f%% of the file, and it is still loaded: the budget '
+               'is measured on the whole body), ~%d tokens (%s; soft %d)'
+               % (content, n_idx, pct_idx, toks, how, TOKEN_SOFT))
+        findings.append(('ok', msg))
+    elif content <= CONTENT_LINES_HARD and toks <= TOKEN_HARD:
+        findings.append((
+            'warn',
+            'SKILL.md is %d lines / ~%d tokens (%s), over the soft budget (%d lines / %d tokens) -- '
+            'the always-loaded body is what the model reads on activation. Move detail into '
+            'references/ and leave a pointer; %d of those lines are the index tables, which are '
+            'loaded too. Total references: %d files.'
+            % (content, toks, how, CONTENT_LINES_OK, TOKEN_SOFT, n_idx,
+               len(glob.glob(os.path.join(REFS, '*.md'))))))
     else:
-        lv, msg = 'fail', 'SKILL.md narrative is %d lines, past the hard limit of %d' % (
-            content, CONTENT_LINES_HARD)
-    return lv, msg, n_idx, content
+        findings.append((
+            'fail',
+            'SKILL.md is %d lines / ~%d tokens (%s), past the hard limit (%d lines / %d tokens)'
+            % (content, toks, how, CONTENT_LINES_HARD, TOKEN_HARD)))
+    return findings, n_idx, content, toks
 
 
 def check_index_rows(lines):
@@ -122,9 +184,57 @@ def check_index_rows(lines):
     return out
 
 
+def check_navigable():
+    """A long reference must be skimmable from its first screen.
+
+    The head is what lets a reader decide *not* to read the rest, which is the only thing that makes
+    a 400-line reference cheaper than a 40-line one. Two shapes are accepted, because both are in
+    use here: an explicit table of contents, or an explicit "when to load / what this answers" line.
+    """
+    out = []
+    for path in sorted(glob.glob(os.path.join(REFS, '*.md'))):
+        lines = read_lines(path)
+        if len(lines) < NAV_LINES:
+            continue
+        head = '\n'.join(lines[:NAV_HEAD_LINES]).lower()
+        has_toc = bool(re.search(r'(?m)^#+ *(table of contents|contents)\s*$', head))
+        has_when = ('when to load' in head or 'what this answers' in head
+                    or 'load this when' in head or 'when this applies' in head)
+        if not (has_toc or has_when):
+            out.append(('warn', 'references/%s is %d lines with neither a table of contents nor a '
+                                '"when to load"/"what this answers" line in its first %d lines -- '
+                                'a reader cannot decide from the top whether to load it'
+                        % (os.path.basename(path), len(lines), NAV_HEAD_LINES)))
+    return out
+
+
+def check_hedging():
+    """Report hedged instruction lines; never fail on them.
+
+    A rule that reads as optional gets skipped when the context is under load. This cannot be
+    decided by regex -- some sentences *should* be optional -- so it reports the lines and a ratio,
+    and a human decides. The ratio is the trend: if it climbs, the rules are getting softer.
+    """
+    lines = skill_lines()
+    body = [ln for ln in lines
+            if ln.strip() and not ln.startswith('|') and not ln.startswith('#')
+            and not ln.startswith('---')]
+    hedged = [(i + 1, ln.strip()) for i, ln in enumerate(lines) if HEDGE_RE.search(ln)]
+    imperative = [ln for ln in body if re.match(r'^\s*[-*]? *(\*\*)?[A-Z]', ln)]
+    ratio = (len(hedged) / len(body)) if body else 0.0
+    notes = []
+    if hedged:
+        notes.append('hedged instruction lines: %d of %d prose lines (%.1f%%; report-only -- a '
+                     'hedged rule reads as optional). First few: %s'
+                     % (len(hedged), len(body), 100.0 * ratio,
+                        '; '.join('L%d %s' % (n, t[:52]) for n, t in hedged[:3])))
+    return notes
+
+
 def check_restated():
     notes = []
     files = (glob.glob(os.path.join(REFS, '*.md')) +
+             glob.glob(os.path.join(REFS, '*', '*.md')) +
              glob.glob(os.path.join(ROOT, 'docs', 'tool-verification', '*.md')) +
              [SKILL, os.path.join(ROOT, 'README.md'), os.path.join(ROOT, 'tests', 'benchmark.md')])
     corpus = {}
@@ -146,13 +256,23 @@ def check_restated():
 
 
 def check_discoverable():
+    """Every reference must be reachable from the entry point or from the routing file it points to.
+
+    `SKILL.md` is the entry point; since this pass it carries the symptom index and delegates the
+    inventory to `references/routing.md` (which `check_routing.py` in turn proves names every
+    reference and every script). Counting the routing file here is what keeps the delegation honest
+    instead of letting a file become unreachable the moment its index row moves.
+    """
     body = open(SKILL, encoding='utf-8').read()
+    routing = os.path.join(REFS, 'routing.md')
+    if os.path.isfile(routing):
+        body += open(routing, encoding='utf-8').read()
     out = []
     for f in sorted(glob.glob(os.path.join(REFS, '*.md'))):
         name = os.path.basename(f)
         if name not in body:
-            out.append(('fail', 'references/%s is never mentioned in SKILL.md -- nothing will '
-                                 'load it' % name))
+            out.append(('fail', 'references/%s is named neither in SKILL.md nor in '
+                                 'references/routing.md -- nothing will load it' % name))
     return out
 
 
@@ -164,15 +284,20 @@ def main():
     args = ap.parse_args()
 
     lines = skill_lines()
-    lv, msg, n_idx, content = check_size(lines)
-    findings = [(lv, msg)]
+    findings, n_idx, content, toks = check_size(lines)
     findings += check_index_rows(lines)
     findings += check_discoverable()
-    notes = check_restated()
+    findings += check_navigable()
+    notes = check_restated() + check_hedging()
 
     if args.json:
-        print(json.dumps({'findings': [{'level': l, 'message': m} for l, m in findings],
-                          'notes': notes, 'index_lines': n_idx, 'content_lines': content}, indent=2))
+        print(json.dumps({
+            'findings': [{'level': l, 'message': m} for l, m in findings],
+            'notes': notes,
+            'index_lines': n_idx,
+            'total_lines': content,
+            'token_estimate': toks,
+        }, indent=2))
     else:
         for l, m in findings:
             print('%s %s' % ({'ok': '  ok  ', 'warn': ' WARN ', 'fail': ' FAIL '}[l], m))

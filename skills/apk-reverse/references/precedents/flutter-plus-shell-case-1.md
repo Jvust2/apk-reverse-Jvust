@@ -6,7 +6,7 @@
 | Context | dynamic analysis of a hardened Android sample (Flutter AOT payload behind a third-party application-stub) on a rooted physical device |
 | Cost | three attribution corrections; two of them were written down as findings before being refuted |
 | Outcome | the drift is attributed to the sample's own environment check, and the operational rule that falls out of it ("configure root hiding, then re-baseline") |
-| Evidence | `docs/tool-verification/EXTENSION-device-run.md` (the pid-drift section and the frida-dexdump section); `docs/tool-verification/EXTENSION-lsposed.md` (the root-hiding layer) |
+| Evidence | `references/evidence-summary.md` §The capability matrix (the pid-drift section and the frida-dexdump section); `references/evidence-summary.md` §The capability matrix (the root-hiding layer) |
 | Related | `SKILL.md` §Stop conditions (last bullet); `pitfalls.md` P9, P18; `references/detection-and-anti-analysis.md` |
 
 ## Assertions and grade
@@ -16,11 +16,11 @@
 | 2 | During a session its pid changed repeatedly: `22691 → 23452 → 24267 → 27274 → 31284 → 32259 → 1368 → 8161` | observed | the same evidence file's pid-drift transcript |
 | 3 | The drift reproduces with `frida-server` **stopped** and no attach | observed | a 90-second observation loop, four pid changes, with the frida process absent |
 | 4 | The process dies as the **foreground top activity**, with no crash, no tombstone and no ANR record, and the platform relaunches it on a 7–18 s cycle | observed | `adb logcat \| grep <PKG>` → `Process <PKG> (pid N) has died: fg TOP` followed by `Start proc <pid> for top-activity <PKG>` |
-| 5 | No application on the device was hidden from root at the time | observed | `magisk --denylist status` = enforced, `--denylist ls` printed nothing, `/data/adb/shamiko` absent (the root-hiding section of `EXTENSION-lsposed.md`) |
+| 5 | No application on the device was hidden from root at the time | observed | `magisk --denylist status` = enforced, `--denylist ls` printed nothing, `/data/adb/shamiko` absent (the root-hiding section of `references/evidence-summary.md` §The capability matrix) |
 | 6 | The cause is the sample detecting its rooted environment and exiting on purpose | **inferred** — the mechanism fits every observation, but it was not proven by disabling the check |
 | 7 | Memory pressure was **not** the cause | observed (refuted) | the drift continued at 300–750 MB free of 11.5 GB, and a reclaim kill leaves an `lmkd` line and a low-memory record — neither present |
 | 8 | Instrumentation was **not** the cause | observed (refuted) | the `frida-server`-stopped control run |
-| 9 | The device's own hooking framework was already damaged during the window (`lspd` alive but not updating its configuration, `zygote crashed too many times, rolling-back`) | observed | the framework-damage section of `EXTENSION-device-run.md` |
+| 9 | The device's own hooking framework was already damaged during the window (`lspd` alive but not updating its configuration, `zygote crashed too many times, rolling-back`) | observed | the framework-damage section of `references/evidence-summary.md` §The capability matrix |
 | 10 | A `start timeout` kill line discriminates between these causes | **observed negative** — it reads identically for a slow init, a reclaiming device and a deliberate delay, so it is not evidence either way | the `ActivityManager` transcript quoted in the same evidence file |
 
 ## Execution chain (including the dead ends)

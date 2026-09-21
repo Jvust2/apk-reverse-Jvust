@@ -2,6 +2,9 @@
 
 Goal: ads stop appearing, and **nothing else breaks**. Read `pitfalls.md` P5 and P6 before patching anything here.
 
+
+**Load this when:** an ad, promo, splash or rewarded video must stop appearing, or an ad-related SDK was found in recon. It gives the enumeration step that decides *which* layer the ad lives on, then the removal per layer.
+
 ## Step 1: enumerate what "ads" means in this app
 
 Do not assume "ads" is one thing. Enumerate first.

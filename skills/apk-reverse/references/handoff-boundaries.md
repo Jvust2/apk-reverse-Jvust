@@ -35,7 +35,7 @@ that performs the unpacking. `packers.md` owns the dex-side identification; the 
 belongs on the other side of this boundary. **Not exercised by the first verification pass** — that
 target had no packer, so this pointer carries no measurement from it. The benchmark pass measured the
 *shape discrimination* on public samples but still did not run a live extraction shell
-(`tests/benchmark.md` row B3).
+(the benchmark matrix (`references/evidence-summary.md` §The capability matrix) row B3).
 
 ## 3. The existing native boundaries — read native anomalies from the APK side, not from inside
 
@@ -67,4 +67,4 @@ loud, not a quiet downgrade of what counts as done.
 **A fifth boundary, added by the benchmark pass:** when the deliverable is a **tool or a document in
 this repository**, "verified" means an independent check exists — a second implementation, an
 official disassembler, a byte-exact round trip. A tool's own self-test passing is not that check.
-`tests/benchmark.md` records which rows have one and which do not.
+the benchmark matrix (`references/evidence-summary.md` §The capability matrix) records which rows have one and which do not.

@@ -9,9 +9,12 @@ This file carries the part that is read **only when you need to weigh a claim** 
 behind each covered item, the exact footing of the unverified ones, and the historical record of
 what was and was not exercised. Load it when a claim's strength decides whether you trust it.
 
+
+**Load this when:** a claim's strength decides whether you trust it, or you are about to quote this skill's coverage. It gives the evidence behind each covered item, the dependencies this skill does not ship, and the routes nobody has run.
+
 ## Strength labels
 
-- **observed** — a command was run and its output is recorded in `docs/tool-verification/`.
+- **observed** — a command was run and its output is recorded in the evidence record condensed in `references/evidence-summary.md` §Where the full record lives.
 - **inferred** — follows from documented mechanism or from a neighbouring measurement; the step
   itself was not executed.
 - **unverified** — assumed, or reported by someone else, and not reproduced in this repository.
@@ -48,7 +51,7 @@ but nobody here has paid for the counters yet.
 
 ### Added by the benchmark pass, and measured against public targets
 
-Each of these has a row in `tests/benchmark.md` naming its target, its strength and the evidence
+Each of these has a row in the benchmark matrix (`references/evidence-summary.md` §The capability matrix) naming its target, its strength and the evidence
 file behind it.
 
 - **Java2C versus JNI sinking versus an extraction shell.** Native-declaration density separates the
@@ -86,7 +89,7 @@ its own strength note at the top.
 - **Calling the target instead of reading it** — emulated execution and live Frida-RPC
   service-ification (`emulation-and-rpc.md`).
 - **Instruction-level tracing and de-obfuscation** — the OLLVM shapes, a Stalker trace, the
-  trace-to-CFG route, and the measured boundaries in `native-dbi-and-deobfuscation.md` §6.
+  trace-to-CFG route, and the measured boundaries in `native-dbi-and-deobfuscation.md`.
 - **Protocol reversing beyond REST** — protobuf without a schema, gRPC frame capture, the QUIC/HTTP3
   limit, native-side certificate pinning (`protocol-reverse.md`).
 - **What to do when userspace hooking provably cannot reach the check** — raw `svc` syscalls,
@@ -131,7 +134,7 @@ its own strength note at the top.
   module is outside this skill.
 - **A working Stalker trace on every device.** Two boundaries are measured and one of them is now
   better understood: exclusion keeps the target alive but does **not** restore event delivery
-  (`docs/tool-verification/EXTENSION-stalker-exclude.md`). Treat the zero-event case as a boundary to
+  (`references/evidence-summary.md` §The capability matrix). Treat the zero-event case as a boundary to
   identify, not a recipe to follow.
 
 ## Historical verification record
@@ -144,7 +147,7 @@ with no packer — the Dart work above, library mapping, and the environment fac
 exercise** the packer, code-virtualization, custom-linker, integrity-check-redirection or
 tamper-suicide scenarios: that target has none of those features and its unmodified build already
 fails to start, which removes the repack-and-regress loop those scenarios need. Nothing in
-`docs/tool-verification/` is evidence either way about them.
+the evidence record condensed in `references/evidence-summary.md` §Where the full record lives is evidence either way about them.
 
 **Scripts the first pass did not run** — they carry no measurement from that pass, and any
 conclusion drawn from them should be labelled accordingly: `native_crash.py`, `apk_diff.py`,
@@ -157,10 +160,10 @@ a crash-reporter SDK — the exact situation that target presented — and was n
 remains **unverified**. **The benchmark pass has since run some of these**: `repack.py`,
 `dex_patch_bytes.py`, `dex_dump_validate.py`, `dex_mem_scan.py`, `spawn_patch_detach.py` and
 `stalker_trace.js` now have measurements, with the failures recorded alongside the successes in
-`tests/benchmark.md`.
+the benchmark matrix (`references/evidence-summary.md` §The capability matrix).
 
 **The extension pass shipped its own scripts, each with its own status** — read the matching
-`docs/tool-verification/EXTENSION-*.md` before relying on one: `dex_dump_validate.py` (measured
+the per-topic files named in `references/evidence-summary.md` §Where the full record lives before relying on one: `dex_dump_validate.py` (measured
 against a fixture derived from a real hardened sample, and against that sample's own shell dex),
 `lsposed_scaffold.py` (its generated project was built end to end, toolchain timings recorded),
 `frida_rpc_serve.py` (the `rpc.exports` bridge was exercised on a live device),
@@ -169,12 +172,12 @@ started by hand), and `stalker_trace.js` / `stalker_report.py` (two boundary res
 trace of a real target).
 
 **The extension pass's claims are mostly `inferred`.** Its evidence lives in
-`docs/tool-verification/EXTENSION-*.md`, one file per topic, each with its own strength note. The
+the per-topic files named in `references/evidence-summary.md` §Where the full record lives, one file per topic, each with its own strength note. The
 common shape there is *the tool was measured, the route was not* — read those files before treating
 any of the newer documents as a verified path.
 
 **The detection pass added two tools and three boundaries, and its evidence is mixed.** Recorded in
-`docs/tool-verification/EXTENSION-detection-pipeline.md`:
+`references/evidence-summary.md` §The capability matrix:
 
 - `svc_scan.py` — **measured**, and its whole claim is cross-checked: two independent decoders
   (a hand-written word scan and the capstone-based scan) returned an identical 214-site set on a
@@ -210,7 +213,8 @@ any of the newer documents as a verified path.
   weaker read-path check is what was run instead, and the distinction is stated in the evidence file
   rather than papered over.
 
-**Where the record lives.** `docs/tool-verification/README.md` indexes it; `tests/benchmark.md` is
-the public-target regression matrix. Neither ships inside the installed skill (they sit at the
-repository root), so an installed copy of the skill carries the claim but not its evidence file —
-which is why the strength label is stated here rather than left to be looked up.
+**Where the record lives.** The full record is `docs/tool-verification/` at the **repository root, not
+shipped** with the skill; `references/evidence-summary.md` is the condensation that does travel, and
+`references/routing.md` is the inventory. Neither the per-topic records nor the public-target
+regression matrix ships inside an installed skill, so an installed copy carries the claim but not its
+evidence file — which is why the strength label is stated here rather than left to be looked up.

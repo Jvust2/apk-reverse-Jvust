@@ -10,7 +10,7 @@ that is a different problem with its own file: read `tls-and-cert.md` first — 
 attribution and the permissive-defaults template, and this file deliberately does not repeat them.
 
 **Claim strength.** `measured` = an exact command and output exist in
-`docs/tool-verification/EXTENSION-native-dbi.md`. `inferred` = documented behaviour or a step that
+`references/evidence-summary.md` §The capability matrix. `inferred` = documented behaviour or a step that
 follows directly from a measured one. `unverified` = reported by others, not reproduced here. The
 wire-format section is `measured` on a self-built fixture; every tool named below is `unverified`
 unless stated otherwise.
@@ -32,7 +32,7 @@ sequence". That is the whole format; the schema supplies meaning and nothing els
 | Wire types 3/4 | group start/end, legacy; treat as unsupported when walking a modern payload |
 
 A host-side check of the rules, including the canonical `150 -> 96 01`, was run independently of the
-shipped decoder — `docs/tool-verification/EXTENSION-protobuf-raw.md` records that cross-check against
+shipped decoder — `references/evidence-summary.md` §The capability matrix records that cross-check against
 the official runtime. Measured output on the fixture built for it:
 
 ```
@@ -136,7 +136,7 @@ are framing and not message data.
 
 The measured record for this tool -- every command, both input forms, the round trip, and the
 framing mistake it does *not* protect you from -- is in
-`docs/tool-verification/EXTENSION-protobuf-raw.md`.
+`references/evidence-summary.md` §The capability matrix.
 
 ## 2. Recovering the schema from the APK
 
@@ -311,18 +311,18 @@ a system CA when a native verifier ignores it produces the same empty capture yo
 often decode into a plausible-looking field list. Guard against it by (a) decoding several samples of
 the same message and expecting the same field set, (b) checking that nested lengths exactly consume
 their parents, and (c) when you have a schema, re-encoding the decoded structure and comparing bytes
-with the input — the same round-trip check used in §1, which caught a decoder bug in this
+with the input — the same round-trip check used in, which caught a decoder bug in this
 repository's own fixture.
 
 **A framing choice that is wrong without being refused.** `--split varint-length` means protobuf's own
 `writeDelimitedTo` framing: a varint length, then the message. gRPC frames a message differently — one
-compression-flag byte, then a **four-byte big-endian** length (§3). Handed a real gRPC frame, the
+compression-flag byte, then a **four-byte big-endian** length (). Handed a real gRPC frame, the
 varint splitter reported **five** frames rather than failing, while the same bytes decoded with no
 splitting reported `stray_end_group`. Strip the 5-byte gRPC prefix yourself, and check the frame count
 either way: a wrong split still produces a decode, which is what makes it expensive.
 
 **Assuming the proxy sees everything.** The proxy sees what the client sends through it. An app that
-uses QUIC (§4), a raw socket, a native client bypassing Java's HTTP stack, or a certificate-pinned
+uses QUIC (), a raw socket, a native client bypassing Java's HTTP stack, or a certificate-pinned
 connection shows up as silence. Silence is evidence about the transport, not about the app: check
 UDP activity, check whether a native library is doing the I/O (`lib_map.py`, `dynamic-frida.md`),
 and only then conclude that a feature is client-side.

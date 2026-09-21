@@ -206,6 +206,22 @@ references/               loaded on demand, one topic each
                               the entry-point file as a prompt surface
   precedents/                 the positive case library: route including dead ends, a grade per
                               assertion, measured pit-falls, and the write-back checklist
+  routing.md                  the on-demand inventory: every reference with when to load it, every
+                              script with what it does, and a mirror of the symptom index
+  evidence-summary.md         the condensation that ships with the skill: capability, one-line
+                              conclusion, strength, and the evidence you can actually open in an
+                              installed copy
+
+  ../evals/                   NOT a spec directory either, but the location the Agent
+                              Skills guidance recommends: `evals.json` holds the
+                              with-skill / without-skill cases this skill has **not** run,
+                              with the method for running them written into the file
+  ../evidence/                NOT a spec directory: the machine-readable companions to the evidence
+                              summary reference above -- `capability-matrix.json` (the same rows with
+                              more fields), `tested-tool-versions.json` (versions and the probe behind
+                              each), `known-limitations.md` (the installer-facing limit list). Shipped
+                              inside the skill so an installed copy can answer "was this verified, and
+                              how strongly" without the repository
   pitfalls.md                 the failure catalogue -- read before building
   advanced-unpacking.md       the dump landed but the bodies are empty: extraction-shell diagnosis by
                               trivial-body ratio, FART-style active invocation and why its classic hooks
@@ -364,6 +380,11 @@ scripts/                  parameterized, path-agnostic
                               self-destructing target still yields evidence
 ```
 
+The repository also carries an **executable** test layer, which is a different thing from the
+evidence record: `tests/` asserts what the scripts do (unit, CLI contract, no-device
+integration) and `tests/benchmark.md` records what a route did on a real target. `tests/README.md`
+states the split, and `.github/workflows/ci.yml` runs the gates plus the suite.
+
 ## Install
 
 This repository is a **skills repository**: the skill lives at `skills/apk-reverse/`, which is the
@@ -488,14 +509,21 @@ Four tools live at the root and are not part of the installed skill:
 check_repo.py      every skill discovered, frontmatter valid, scripts runnable,
                    documented paths resolve, README paths explicit and existing,
                    and -- on the tracked surface only -- no target identity
-                   (delegates the rules to skills/apk-reverse/scripts/scan_leaks.py so
-                   there is one place to argue with the exemption list)
+                   (delegates the rules to skills/apk-reverse/scripts/scan_leaks.py
+                   so there is one place to argue with the exemption list)
 check_refs.py      every cross-reference that names a section of another
                    document reaches a real heading in that document
-check_budget.py    keep the always-loaded part from creeping: narrative lines in
-                   SKILL.md (index lines counted separately, because one line per
-                   bundled file is the price of discoverability), index-row length,
-                   and conclusions restated outside their legitimate homes
+check_routing.py   the on-demand inventory still matches the entry point: the
+                   symptom mirror agrees with SKILL.md, every reference file is
+                   named in skills/apk-reverse/references/routing.md, and every
+                   script is too
+check_commands.py  every command a document tells you to run is checked against
+                   the script's own argparse table -- a documented flag that does
+                   not exist is a drift the anchor checks cannot see
+check_budget.py    keep the always-loaded part from creeping: SKILL.md's whole
+                   body (index lines included, because they load too) measured in
+                   lines and tokens, index-row length, long files with no
+                   navigable head, and hedged rules reported as a trend
 build_scripts.py   audit for machine-specific leftovers (absolute paths, credentials)
 ```
 

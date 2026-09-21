@@ -2,6 +2,9 @@
 
 **Symptom class:** after a repack, login or registration fails with a TLS error while the rest of the app behaves normally. This is the most common way a *correct* patch gets blamed for a *pre-existing, server-side* condition. Work the five steps below before changing a single byte of the app.
 
+
+**Load this when:** one feature fails at runtime -- login, registration, payment, an API-backed screen -- while the rest of the app works. It gives the five steps that separate a real TLS/certificate problem from the patch you just built.
+
 ## Fast path
 
 | # | Action | Evidence |

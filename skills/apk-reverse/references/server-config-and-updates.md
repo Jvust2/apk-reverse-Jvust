@@ -13,6 +13,9 @@ Two consequences that change the whole plan:
   Any patch that just leaves the config unread is a patch the operator can undo.
   The durable fix is in the client's decision path, not in the data.
 
+
+**Load this when:** a launch screen, popup, announcement or tab set must go, and there is no SDK to find. It gives the server-issued-config shape, how to tell it from a client-side flag, and the remote re-enable that undoes your patch.
+
 ## 1. Two-layer fetch: local default, then remote override
 
 The most useful diagnostic — and it is a runtime observation, not a static one — is
@@ -54,7 +57,7 @@ promo, promotion, banner, bannerList, featured, sponsored
 
 A `*Config` / `*Popup` / `*Banner` suffix with an `enabled` boolean is the signal
 you are in this layer. **The `enabled` flag's polarity is not guaranteed by its
-name** — see §4.
+name** — see.
 
 Then find the **consumption point**, which is where you patch: the method that
 reads the flag and decides. The DTO itself is usually immutable and shared, so
@@ -130,7 +133,7 @@ A config-driven behaviour needs more evidence than a log line:
 Two channels can undo client-side work without a version bump:
 
 - **The config endpoint itself.** Your patch must be in the decision path so a
-  future `enabled=true` is still ignored (see §3). A patch that reads the flag and
+  future `enabled=true` is still ignored (see). A patch that reads the flag and
   happens to work today is not durable.
 - **A hot-update / dynamic-resource channel** (a downloaded bundle, a patch dex, a
   remotely loaded layout). Look for a cache directory that is not the config cache,

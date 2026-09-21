@@ -9,6 +9,9 @@ This is distinct from "the server checks the signature". Here the *client* uses 
 as key material, and the server was built against the original key. The failure looks like a
 server problem and is actually a signing problem.
 
+
+**Load this when:** the app reads `signatures[0]`/`toCharsString()`, or a rebuilt APK installs, launches and logs nothing wrong while every signed request fails. It gives the 15-minute check that prevents the most expensive silent repack failure.
+
 ## How to spot it (four greps, minutes)
 
 ```bash
@@ -58,8 +61,12 @@ and every request signing parameter evaluating to `-1`.
 **Route A — from the device (authoritative):**
 
 ```bash
-python scripts/sig_probe.py --live --pkg <pkg>            # needs Frida + a rooted device
+python scripts/sig_probe.py --live <pkg>                  # needs Frida + a rooted device
 ```
+
+`--live` takes the package name as its own argument; there is no `--pkg` flag. Verify the call
+against the script's own usage (`python scripts/sig_probe.py --help`) rather than against this page —
+`check_commands.py` at the repository root validates documented commands for exactly this reason.
 
 It prints `signatures[0].toCharsString()` and its length, read from the package manager on the
 device. This is the only value that is guaranteed to match what the app computes.

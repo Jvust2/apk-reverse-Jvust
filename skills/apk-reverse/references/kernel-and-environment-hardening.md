@@ -17,11 +17,11 @@ Division of labour, so the two files never duplicate:
 **This repository does not do kernel development.** Everything in the kernel section is a map of
 externally documented mechanisms with sources, labelled `inferred` — none of it was executed here.
 That is deliberate: the purpose is to stop you from spending a day rediscovering the version
-gate (§4) or the conflict (§5), not to teach kernel hacking.
+gate () or the conflict (), not to teach kernel hacking.
 
 **Extension pass, read the next paragraph before relying on it.** This file now has a companion
 generator — `scripts/kernelsu_syscall_mask.py` — which emits a loadable userspace module skeleton
-plus kernel-side **templates** for the three routes in §4. The generator, its userspace output and
+plus kernel-side **templates** for the three routes in. The generator, its userspace output and
 its own consistency check are `measured`; **the kernel-side code has never been compiled or loaded
 anywhere**, and every generated kernel file says so in its own header. A template is a starting
 point that removes the blank page, not a weapon that has been fired.
@@ -54,7 +54,7 @@ why the hook does not land):
 | `/proc/self/maps` scan for foreign mappings | The read can be done with raw `openat`+`read` syscalls (same svc trick), and the thing being detected — your injected agent's mapping — exists in the process regardless of what you hook. |
 | Named pipes / thread-name probes for known agents | Frida's runtime creates identifiable threads (`gum-js-loop` etc.) and (older versions) a linjector pipe. Renaming helps only if you control the runtime's identity, not the probe. |
 | Code-page checksums of the target's own `.so` | An inline hook *is* a modification of the pages being checksummed. The check catches the hook by construction; the only userspace answer is to also neutralise the checksum, which recursively has the same problem if *that* code is checksummed too. |
-| `/proc/self/status` `TracerPid` read | The field is written by the kernel. A userspace hook on the reader works only until the reader uses raw syscalls (row 1). See §6. |
+| `/proc/self/status` `TracerPid` read | The field is written by the kernel. A userspace hook on the reader works only until the reader uses raw syscalls (row 1). See. |
 
 The structural lesson: **userspace hooking and userspace anti-hooking are the same layer.** A
 detection routine that lives in the same process as your hook, and that is willing to use raw
@@ -144,7 +144,7 @@ uname -r            # on the device. The gate for most of this section is 5.10+
 |---|---|---|---|
 | **eBPF kprobes/uprobes** | Fire a BPF program on kernel or userspace function entry; observe syscall arguments/results system-wide, invisible to the target process | GKI 5.10+ kernel with the BTF/tracing config; root; toolchain (bpftrace or a custom loader) | `inferred` — documented upstream, not run here |
 | **seccomp-BPF filter** | Per-process syscall allow/deny — can make a syscall **fail**, and seccomp can be installed by the app on itself (no root needed for self-filtering) | Any modern kernel; but a filter you install into the target requires ptrace/zygisk injection first | `inferred`. **Key limitation**: seccomp can reject or error a syscall (SECCOMP_RET_ERRNO/TRAP); it cannot rewrite the *content* of what a successful read returns. It closes doors; it does not paint them. |
-| **Kernel module hooking** (KPM on APatch; out-of-tree LKM elsewhere) | Inline hooks and syscall-table hooks in kernel space — the layer that *can* rewrite what a `/proc` read returns | APatch (KPM) or a self-built kernel/LKM load path; kernel-dev skills | `inferred`. This is genuine kernel development — out of scope for this skill (§7) |
+| **Kernel module hooking** (KPM on APatch; out-of-tree LKM elsewhere) | Inline hooks and syscall-table hooks in kernel space — the layer that *can* rewrite what a `/proc` read returns | APatch (KPM) or a self-built kernel/LKM load path; kernel-dev skills | `inferred`. This is genuine kernel development — out of scope for this skill () |
 | **Zygisk injection** (not kernel, but below the target's defences) | Run code in the target's process from zygote fork, before `.init_array` of the app's own libs | Magisk/KernelSU+ZygiskNext + a Zygisk module; no ptrace involved | `measured` as a framework (LSPosed runs this way on the reference device); a purpose-built module for a given target is `inferred` here |
 
 The row that matters most in practice: **Zygisk is the cheap "below userspace" route** — it is in
@@ -241,7 +241,7 @@ rather than to any tool:
    - attach-free operation: **Zygisk** (injection at fork; no ptrace) or Frida **spawn** (still
      ptrace-based but only during injection — verify for your version) or a memory patch applied
      before detach (`scripts/spawn_patch_detach.py`, `measured`);
-   - kernel-level hiding of the field (KPM/eBPF rewrite of the proc read) — §4, `unverified`;
+   - kernel-level hiding of the field (KPM/eBPF rewrite of the proc read) —, `unverified`;
    - **self-ptrace**: the target ptraces itself so nothing else can (classic anti-anti-debug);
      works because only one tracer is allowed — but it constrains your tooling to non-ptrace
      routes anyway. `inferred`.
@@ -288,7 +288,7 @@ defeated with a custom kernel module is not a deliverable anyone can install.
 ## Checklist
 
 - [ ] `detection-and-anti-analysis.md` read first; A/B/C chosen deliberately
-- [ ] Check located on the timeline (§1) before choosing a counter-layer
+- [ ] Check located on the timeline () before choosing a counter-layer
 - [ ] Root scheme's artefacts enumerated (manager/daemon/mounts) before blaming the target
 - [ ] Hiding module: exactly one of Shamiko / Zygisk-Assistant; denylist configured to its spec
 - [ ] Kernel rung checked against `uname -r` — one line recorded if closed

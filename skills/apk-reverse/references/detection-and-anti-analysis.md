@@ -91,7 +91,7 @@ anti-instrumentation pipeline published in `index-login/MobileRE-Skill`
 are not vendored here and none of its scripts are used; what is taken is the **order** and the
 branch conditions, which are the parts that transfer. Stages 2, 3, 5 and 6 are **observed** as
 mechanisms on this repository's own device (evidence and exact commands:
-`docs/tool-verification/EXTENSION-detection-pipeline.md`). Stage 4's kill path was reached once and
+`references/evidence-summary.md` §The capability matrix). Stage 4's kill path was reached once and
 is unstable across runs, so treat its detail there as `observed`-once, not reproducible.
 Stage 1 is `observed` and is the one that most often ends the investigation without an escalation.
 

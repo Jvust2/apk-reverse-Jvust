@@ -14,7 +14,7 @@ file splits that row and owns both halves of it; the virtualization file stays w
 
 **Strength note, read this first.** The measurements below are **observed** — every number was
 produced by `scripts/java2c_probe.py` against a real sample during this pass, recorded in
-`docs/tool-verification/EXTENSION-java2c.md`. But no Java2C library exists in this repository and
+`references/evidence-summary.md` §The capability matrix. But no Java2C library exists in this repository and
 none could be built here (no NDK, no clang, WSL unavailable — see that record), so **the
 Java2C-specific identification criteria are inferred, not observed end to end**. What *is*
 observed is the discriminating measurement that separates Java2C from JNI sinking, and the JNI

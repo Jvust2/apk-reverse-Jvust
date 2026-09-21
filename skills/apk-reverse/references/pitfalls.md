@@ -6,6 +6,9 @@ Each entry: **symptom → root cause → why it is hard to see → what to do in
 
 ---
 
+
+**Load this when:** before building anything, and again when a failure looks familiar. It is the failure catalogue: symptom, root cause, why it is hard to see, and what to do instead. Skim it; do not read it linearly.
+
 ## P1. Stripping the whole `META-INF/` breaks the app at startup
 
 **Symptom**

@@ -6,8 +6,8 @@
 | Context | instruction-level tracing with Frida Stalker on Android 11 / arm64-v8a, on system processes, to test whether `Stalker.exclude()` fixes the community-reported zero-event and crash behaviour |
 | Cost | three arms plus one harness correction; the two defects below both produce a *believable* zero-event trace, so they would have been read as a target finding |
 | Outcome | the crash half has a clean cause (`exclude` fixes it); the zero-event half does not, and is now an explicit warning in the script rather than a silent empty log |
-| Evidence | `docs/tool-verification/EXTENSION-stalker-exclude.md`; `docs/tool-verification/EXTENSION-native-dbi.md` (device attempts A and B) |
-| Related | `references/native-dbi-and-deobfuscation.md` §6; `scripts/stalker_trace.js`, `scripts/stalker_report.py`; `pitfalls.md` P26 |
+| Evidence | `references/evidence-summary.md` §The capability matrix; `references/evidence-summary.md` §The capability matrix (device attempts A and B) |
+| Related | `references/native-dbi-and-deobfuscation.md`; `scripts/stalker_trace.js`, `scripts/stalker_report.py`; `pitfalls.md` P26 |
 
 ## Assertions and grade
 | # | Assertion | Grade | Evidence |
@@ -16,8 +16,8 @@
 | 2 | Excluding 20 system modules kept the process alive through the follow window | observed | `treatment … DONE\|reason=timeout` with the process still running, `EXCL\|excluded=20/20 […] not-loaded=3` |
 | 3 | Exclusion did **not** restore event delivery | observed | `treatment` still reported `blocks=0 blk=0 calls=0 truncated=0` after the full 6 s window |
 | 4 | The zero-event warning added to the script fires correctly | observed | `treatment` emitted `WARN\|zero events 1500ms after follow … -- the pipeline is NOT proven`; `control` could not, because its process was already gone |
-| 5 | `CONFIG.autoStart` defaults to `true`, so loading the script starts a follow with default options before any runtime configuration can land | observed | the design section of `EXTENSION-stalker-exclude.md`; the harness patches it to `false` and asserts the patch count |
-| 6 | `frida` spawns a process **suspended**: without an explicit `device.resume(pid)` the followed thread executes nothing and the run reports zero events | observed | the same design section, and the `DONE … blocks=0` transcript in `EXTENSION-native-dbi.md` |
+| 5 | `CONFIG.autoStart` defaults to `true`, so loading the script starts a follow with default options before any runtime configuration can land | observed | the design section of `references/evidence-summary.md` §The capability matrix; the harness patches it to `false` and asserts the patch count |
+| 6 | `frida` spawns a process **suspended**: without an explicit `device.resume(pid)` the followed thread executes nothing and the run reports zero events | observed | the same design section, and the `DONE … blocks=0` transcript in `references/evidence-summary.md` §The capability matrix |
 | 7 | `Process.getMainThreadId()` returned a tid that was **not** the pid on Android (26261 for a pid of 19938), so the script's default thread selection watched the wrong thread | observed | `TRIG following tid=26261 (main-thread follow (pid=19938))` |
 | 8 | Re-running with the real main thread `start(19938)` produced the same zero | observed | `DONE reason=timeout blocks=0 blk=0 calls=0` |
 | 9 | A hot-function trigger (`malloc` in `libc.so`) produced 201 complete follow cycles with zero blocks in any of them | observed | 609 log lines, 201 follows, 201 `DONE`s, `nonzero_blk = 0` |

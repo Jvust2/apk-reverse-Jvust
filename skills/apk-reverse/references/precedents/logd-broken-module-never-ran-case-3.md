@@ -6,8 +6,8 @@
 | Context | verifying that an LSPosed hook module was actually injected into a hardened target, on a rooted Android 11 device |
 | Cost | the verification criterion itself had to be corrected; `logcat` was empty across nine successful injections |
 | Outcome | the injection is proven from `/data/adb/lspd/log/modules_<timestamp>.log`, and the read rule is now "both channels, always" |
-| Evidence | `docs/tool-verification/EXTENSION-lsposed.md` (the injection-line, log-surfaces and scope sections) |
-| Related | `docs/tool-verification/EXTENSION-device-run.md` (the framework-damage section); `references/lsposed-and-modules.md`; `references/environment.md` |
+| Evidence | `references/evidence-summary.md` §The capability matrix (the injection-line, log-surfaces and scope sections) |
+| Related | `references/evidence-summary.md` §The capability matrix (the framework-damage section); `references/lsposed-and-modules.md`; `references/environment.md` |
 
 ## Assertions and grade
 | # | Assertion | Grade | Evidence |

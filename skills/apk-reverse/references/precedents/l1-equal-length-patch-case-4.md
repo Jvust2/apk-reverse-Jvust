@@ -6,7 +6,7 @@
 | Context | an equal-length dex patch against a public crackme (`UnCrackable-Level1`), taken all the way to an installed, launched build whose blocking dialog is gone |
 | Cost | one full pipeline re-run after the repository changed mid-pass; one false verification caused by a reused remote filename |
 | Outcome | the end-to-end chain is measured, with a zero-change control through the **same** pipeline — which is what makes the four bytes, rather than the pipeline, responsible |
-| Evidence | `docs/tool-verification/EXTENSION-benchmark-l1-l3.md` (the B1 sections); `tests/benchmark.md` row B1 |
+| Evidence | `references/evidence-summary.md` §The capability matrix (the B1 sections); the benchmark matrix (`references/evidence-summary.md` §The capability matrix) row B1 |
 | Related | `references/byte-level-patching.md`, `references/patch-audit.md`, `references/repack-and-sign.md`, `references/verification.md` (the control-build rule) |
 
 ## Assertions and grade

@@ -1,5 +1,8 @@
 # Environment — device, emulator, tooling, networking
 
+
+**Load this when:** before the first experiment on a device, and again whenever a failure surprises you. It gives device/emulator selection, root, ADB and networking, the preflight check, and how to look at the screen instead of driving blind.
+
 ## Pick your target
 
 | Option | Pros | Cons |

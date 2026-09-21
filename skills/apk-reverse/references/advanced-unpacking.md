@@ -18,8 +18,8 @@ active-invocation hooks die on modern ART). The detection metric has since been
 **measured against a purpose-built extraction-shell fixture set**, and that pass
 invalidated the threshold this file used to state — see the calibration table in
 §Measuring extraction instead of guessing and the commands behind it in
-`docs/tool-verification/EXTENSION-extraction-shell-bench.md`. The older surgical fixture
-that first exercised the script is in `docs/tool-verification/EXTENSION-unpacking.md`.
+`references/evidence-summary.md` §The capability matrix. The older surgical fixture
+that first exercised the script is in `references/evidence-summary.md` §The capability matrix.
 Label your own results the same way.
 
 Two parts of this file have since been exercised against live hardened targets on a
@@ -27,13 +27,13 @@ rooted device. The **root-side memory route** (§Dumping when frida is refused) 
 end to end: 17 ART dex mappings exported from `/proc/<pid>/mem`, page-alignment trim
 included, validated with `scripts/dex_dump_validate.py`; the evidence, the device-shell
 traps and the throughput numbers are recorded in
-`docs/tool-verification/EXTENSION-rootdump.md`. The `frida-dexdump` refusal that
-motivates that section is in `docs/tool-verification/EXTENSION-device-run.md`. A later
+`references/evidence-summary.md` §The capability matrix. The `frida-dexdump` refusal that
+motivates that section is in `references/evidence-summary.md` §The capability matrix. A later
 pass added the route's **negative boundary** — what it yields nothing against, and how
 to tell before spending a process window — plus the reproducibility check between read
 paths and the layered-descent table; those are measured on the clean MASTG targets and
 on a hardened sample, with commands and hashes in
-`docs/tool-verification/EXTENSION-detection-pipeline.md`. The
+`references/evidence-summary.md` §The capability matrix. The
 FART/active-invocation half of the file is still **inferred** — no extraction-shell
 target has been spliced end to end here, and the two candidate samples shipped in
 `repos/CyReverse` turned out not to be extraction shells at all (their two "shell"
@@ -90,7 +90,7 @@ and ranks which surviving image is the most likely original.
 **Calibration — measured, and it is not a threshold.** Do not look for a `stub%` number
 to compare against. On a real 982 KB application dex (5,061 bodies) every emptying
 shape the shell family uses was built into a fixture and measured against a
-zero-change control (`docs/tool-verification/EXTENSION-extraction-shell-bench.md`,
+zero-change control (`references/evidence-summary.md` §The capability matrix,
 which carries the commands and the full matrix):
 
 | What the shell left behind | `stub%` | vs. control (1.9 %) |
@@ -147,7 +147,7 @@ no winner — an agent that adopts a modified image as its baseline builds every
 subsequent diff on the wrong artifact. When `emptied%` is at the app's own baseline and
 you cannot name a signal that separates the candidates, treat the ranking as
 uninformative for that set. Commands and full matrix:
-`docs/tool-verification/EXTENSION-extraction-shell-bench.md`.
+`references/evidence-summary.md` §The capability matrix.
 
 ## The FART loop: skeleton, invocation, splice
 
@@ -424,7 +424,7 @@ compared different amounts of data", not "something rewrote the file".
 **The non-obstacle, measured:** when the instrumentation route is refused, nothing here
 needs fixing — root reads `/proc/<pid>/mem` with no `ptrace` and no agent, and on the
 test device that produced 17 real, parseable dex images from a hardened process
-(`docs/tool-verification/EXTENSION-rootdump.md`). The correction this pass adds is
+(`references/evidence-summary.md` §The capability matrix). The correction this pass adds is
 narrower than that claim: **the route's yield is a property of the target, not of the
 route.** It yields everything the packer leaves as a whole image; it yields nothing
 against a target whose dex never becomes one.
@@ -524,7 +524,7 @@ desynchronisation is indistinguishable from the finding it fakes. Measured on th
 `ezAndroid` sample: a workbench table reported **1,393 of 22,424 bodies as
 non-decodable** and I read it as private opcodes; the platform decoder returned
 **943,223 lines, 34,566 instruction decodes, and zero structural errors** on the same
-file (`docs/tool-verification/EXTENSION-extraction-shell-bench.md` §3.4). The bodies
+file (`references/evidence-summary.md` §The capability matrix). The bodies
 were ordinary dalvik the whole time, and one of the "desync" methods disassembles into
 five clean instructions under `dexdump`.
 

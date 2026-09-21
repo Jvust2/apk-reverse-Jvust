@@ -2,6 +2,9 @@
 
 Rebuilding is the step where otherwise-correct patches die. Two mistakes account for nearly all of it: **stripping `META-INF/`** and **recompressing entries that must stay stored**.
 
+
+**Load this when:** rebuilding, signing, installing, or a repacked build misbehaves. It gives the two mistakes that account for nearly all failures here, the STORED-and-aligned rule, and every install refusal that looks like a broken build.
+
 ## The rules
 
 **1. Strip only signature artifacts, never the whole directory.**

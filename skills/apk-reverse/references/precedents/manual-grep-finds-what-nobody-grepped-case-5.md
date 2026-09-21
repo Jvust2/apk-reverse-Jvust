@@ -6,19 +6,19 @@
 | Context | this repository's own history: a complete verification pass was recorded, reviewed and merged, and the target identity in its evidence files was found afterwards |
 | Cost | a manual sweep, and the omission survived at least one pass that produced evidence files |
 | Outcome | a desensitization convention (`<PKG>` / `<DEVICE>` placeholders, target identity absent by policy) **and** an automated scan (`scripts/scan_leaks.py`), added in the same pass that recorded this case |
-| Evidence | `docs/tool-verification/EXTENSION-desensitization.md`; `docs/tool-verification/EXTENSION-lsposed.md` (its identifier-convention and injection-line sections); `docs/tool-verification/EXTENSION-device-run.md` (its environment section) |
+| Evidence | `references/evidence-summary.md` §The capability matrix; `references/evidence-summary.md` §The capability matrix (its identifier-convention and injection-line sections); `references/evidence-summary.md` §The capability matrix (its environment section) |
 | Related | `references/desensitization-and-leak-scans.md`; `references/long-task-discipline.md` §Keep a live record, not a log; `references/verification.md` §Reporting |
 
 ## Assertions and grade
 | # | Assertion | Grade | Evidence |
 |---|---|---|---|
-| 1 | Identity was found by a human grep after the material had already been written, and the files had to be corrected | observed as this repository's stated history; the correction itself is visible in the convention every evidence file now opens with | the environment section of `EXTENSION-device-run.md`: *"Target identity is deliberately absent. The sample is referred to as the sample, and its package identifier appears as `<PKG>`"* |
-| 2 | The convention was enforced per file, by hand, at write time | observed | the identifier-convention section of `EXTENSION-lsposed.md` normalises every occurrence of the package identifier and its sub-package prefixes, and states that the transcripts are otherwise verbatim |
+| 1 | Identity was found by a human grep after the material had already been written, and the files had to be corrected | observed as this repository's stated history; the correction itself is visible in the convention every evidence file now opens with | the environment section of `references/evidence-summary.md` §The capability matrix: *"Target identity is deliberately absent. The sample is referred to as the sample, and its package identifier appears as `<PKG>`"* |
+| 2 | The convention was enforced per file, by hand, at write time | observed | the identifier-convention section of `references/evidence-summary.md` §The capability matrix normalises every occurrence of the package identifier and its sub-package prefixes, and states that the transcripts are otherwise verbatim |
 | 3 | Verbatim transcripts were kept, and that is deliberate | observed | the same section keeps the hook-reported class names, "those are what make the evidence checkable" |
 | 4 | No structural gate could have caught it | observed | `check_repo.py` validates layout/frontmatter/`--help`; `check_refs.py` validates section anchors; neither reads content for identity. Both passed on the material that had to be corrected |
-| 5 | An automated scan would have caught it | **inferred** — the scanner was built and measured against a planted corpus, but it was never run against the historical, pre-correction tree | `docs/tool-verification/EXTENSION-desensitization.md`, the planted-corpus and repository-scan sections |
+| 5 | An automated scan would have caught it | **inferred** — the scanner was built and measured against a planted corpus, but it was never run against the historical, pre-correction tree | `references/evidence-summary.md` §The capability matrix, the planted-corpus and repository-scan sections |
 | 6 | The scan finds the four classes that actually occur here — bundle ids in `pm`/`ps`/`manifest` contexts, 16-character serial-shaped tokens, inline key assignments, host user paths | observed | planted corpus: 30 findings across 6 categories, every rule firing |
-| 7 | The scan's first run against the real tree was overwhelmingly false positives, and each one was a shape that legitimately appears in this documentation | observed | the repository-scan section of `docs/tool-verification/EXTENSION-desensitization.md`: 40 findings when the file above was still being written, of which 26 were `strong`/`certain` — and every one of those 26 was inside that pass's own evidence file. After the correction: 0 strong, 4 weak (RFC 5737 usage examples) across 129 files |
+| 7 | The scan's first run against the real tree was overwhelmingly false positives, and each one was a shape that legitimately appears in this documentation | observed | the repository-scan section of `references/evidence-summary.md` §The capability matrix: 40 findings when the file above was still being written, of which 26 were `strong`/`certain` — and every one of those 26 was inside that pass's own evidence file. After the correction: 0 strong, 4 weak (RFC 5737 usage examples) across 129 files |
 | 8 | Over-redaction is the failure on the other side, and it is not hypothetical here | observed | the do-not-anonymize list in the reference file is derived from identifiers that a shape-only scanner flagged in this tree: tool names, SDK packages, dex constant identifiers, public crackme names |
 | 9 | The ratio, not the count, decides whether a gate survives | observed from this case | the pass that produced 27-of-28 false positives also had to fix 26 real ones in its own report on the same day. Both numbers moved the design: exemptions for the shapes that legitimately appear, and a split exit code so the remaining documentation-range hits do not make the gate permanently red |
 
@@ -64,7 +64,9 @@
 ## Write back to the repository
 - [ ] `references/desensitization-and-leak-scans.md` — the reasoning, the split rule, and the
       failure-mode table; this case is its motivating evidence.
-- [ ] `docs/tool-verification/README.md` — the index entry for `EXTENSION-desensitization.md`.
+- [ ] The evidence record's own index — `docs/tool-verification/README.md` at the **repository root,
+      not shipped** — carries the topic entry. The in-skill condensation is
+      `references/evidence-summary.md`.
 - [ ] `references/precedents/README.md` — indexed as case 5.
 - [ ] **Closed in this pass**: `scripts/scan_leaks.py` is wired into the repository workflow (run it
       over the tree before a commit) and the `RESULT=` convention is documented in
@@ -75,7 +77,7 @@
       location, rule, category and grade for all 30 findings and replace every literal with a shape
       description. Boundary that makes it a rule rather than a scare: **the corpus may contain values;
       the published surface may not.** Evidence and transcripts: the "self-leak this file carries" and
-      "inherited versus post-fix" sections of `docs/tool-verification/EXTENSION-desensitization.md`.
+      "inherited versus post-fix" sections of `references/evidence-summary.md` §The capability matrix.
       This is the strongest available argument for the gate — the author of the rule needed it on the
       same day, and did not see it by hand.
 

@@ -83,7 +83,7 @@ it belongs in the chain above instead.
 ## Rules
 
 - **Grade every assertion, and grade it down when in doubt.** `observed` means a command was run
-  and its output is in `docs/tool-verification/`. "I reasoned it out" is `inferred`. This is the
+  and its output is in the evidence record condensed in `references/evidence-summary.md` §Where the full record lives. "I reasoned it out" is `inferred`. This is the
   same standard `references/long-task-discipline.md` §Grade your own conclusions sets for a live
   record, and it is the reason a case is worth reading a year later.
 - **Record the retraction with the claim.** If an earlier conclusion was wrong, both versions

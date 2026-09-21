@@ -151,8 +151,13 @@ def check_scripts(skill_dir):
             print('  FAIL %s' % name)
             continue
         run = subprocess.run([sys.executable, '-B', path, '--help'],
-                             capture_output=True, text=True, timeout=60,
-                             cwd=ROOT)
+                             capture_output=True, timeout=60, cwd=ROOT,
+                             # Decode explicitly. `text=True` alone uses the *locale* encoding, which
+                             # on a Chinese Windows console is GBK: a script printing an em dash in a
+                             # usage line then fails to decode, and this gate reports it as a crash.
+                             # That is a defect in the gate, not in the script -- measured on this
+                             # repository, where `dex_strpatch.py --help` was reported as crashed.
+                             encoding='utf-8', errors='replace')
         # A script may exit non-zero on --help under the "print usage, exit 2"
         # convention. That is acceptable; a traceback is not.
         crashed = 'Traceback (most recent call last)' in (run.stderr or '')
@@ -254,7 +259,8 @@ def check_leaks():
         return
     import subprocess
     import tempfile
-    proc = subprocess.run(['git', 'ls-files'], cwd=ROOT, capture_output=True, text=True)
+    proc = subprocess.run(['git', 'ls-files'], cwd=ROOT, capture_output=True,
+                          encoding='utf-8', errors='replace')
     if proc.returncode != 0 or not proc.stdout.strip():
         print('  SKIP git ls-files unavailable (not a checkout?)')
         return
@@ -264,7 +270,7 @@ def check_leaks():
     try:
         run = subprocess.run([sys.executable, scanner, '--root', ROOT,
                               '--files-from', listing, '--max', '10'],
-                             capture_output=True, text=True)
+                             capture_output=True, encoding='utf-8', errors='replace')
     finally:
         os.unlink(listing)
     token = (run.stdout or '').strip().splitlines()

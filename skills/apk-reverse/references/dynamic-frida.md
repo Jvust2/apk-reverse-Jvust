@@ -9,6 +9,9 @@ Use Frida when you need to answer:
 - Which domains does it resolve, and when?
 - Is the app detecting my instrumentation?
 
+
+**Load this when:** static analysis cannot answer the question (which method renders this, what value reaches that call), or Frida will not install, attach, or stay alive. It gives setup, the four-layer probe, hook strategy, and the ROMs that hunt instrumentation.
+
 ## Setup — version alignment is a hard gate
 
 **Do this first.** Nearly every "Frida is broken on this device" report is a version mismatch, and the error text rarely says so. The host `frida` package and the device-side `frida-server` must be the **same version**, and that version must actually support the device's Android release. Align, then debug everything else.

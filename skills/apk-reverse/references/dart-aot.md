@@ -38,7 +38,7 @@ snapshot hash or a structural probe (§2's Route A), rather than building a deco
 ## 2. Get a decompiler that matches that version
 
 You need a tool that resolves the snapshot container — something that turns `libapp.so` into named
-functions, class layouts and, above all, a **pool listing with `pp+0x…` offsets**. Everything in §4
+functions, class layouts and, above all, a **pool listing with `pp+0x…` offsets**. Everything in
 onward consumes that listing; without it the workflow cannot start, and no script in this skill can
 produce it (see §4 for why the mapping is not recoverable from the binary alone).
 
@@ -114,7 +114,7 @@ Outputs of interest (blutter):
 > disassembly source.
 
 **`product` builds carry no debug info.** Expect `no-code_comments`, no function names, and
-obfuscated identifiers. That is normal; the strings still survive (see §7). Note this is a *format*
+obfuscated identifiers. That is normal; the strings still survive (see). Note this is a *format*
 floor, not a tooling gap: the Dart compiler drops field names outside debug builds, so roughly
 97-99% of instance field names are simply absent, and local/captured variable names are gone
 entirely. Accessor-based recovery (`get:`/`set:` still carry the name) recovers part of the field
@@ -165,7 +165,7 @@ library has no code". If you need capstone here, start at a known function addre
 `skipdata=True`, and treat an implausibly small count as a decoding problem before you treat it as a
 property of the file.
 
-The same mask-based argument applies to building a call graph (§9): decode `B`/`BL` arithmetically
+The same mask-based argument applies to building a call graph (): decode `B`/`BL` arithmetically
 rather than by sweeping.
 
 **A live example of why the index's completeness matters:** after this file's advice to "count the
@@ -183,7 +183,7 @@ Stable across Dart 3.x arm64 AOT. Verify once on a known function, then rely on 
 | `x27` | **object pool base (PP)** — every constant/string/type load goes through it |
 | `x26` | current thread (`[x26,#0x38]` stack limit, `[x26,#0x68]` isolate group) |
 | `x28` | heap base — how compressed pointers are decompressed |
-| `x22` | **null/base for booleans** (see §6) |
+| `x22` | **null/base for booleans** (see) |
 | `x15` | Dart's own stack pointer (not the system SP) |
 | `x21` | class dispatch table (virtual calls load a target from it) |
 
@@ -310,7 +310,7 @@ Use this to find function boundaries when you need to delimit one.
 1. **Anchor on a string.** Search the pool for the shortest distinctive token — a field name, an
    endpoint path, a label. Prefer identifiers over sentences (a sentence may be assembled from
    fragments).
-2. **Find its referencing instructions** via your index (§4).
+2. **Find its referencing instructions** via your index ().
 3. **Disassemble a window** around each reference with pool annotations:
    ```
    python dart_disasm.py libapp.so --pp pp.txt --refs pp_refs.json 0x26e390
@@ -382,7 +382,7 @@ Use this to find function boundaries when you need to delimit one.
   referenced exactly once, at a site that stores a constant into a map that is then sent, the client
   is *reporting* a value — changing it does not change local behaviour. Confirm whether the value is
   ever read before treating it as a gate.
-- **Full-file disassembly is not a debugging tool** (§4). Windowed disassembly is.
+- **Full-file disassembly is not a debugging tool** (). Windowed disassembly is.
 
 ## 12. Verification
 

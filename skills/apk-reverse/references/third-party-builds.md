@@ -1,5 +1,8 @@
 # Third-party builds — auditing a "cracked" or "modded" APK before trusting it
 
+
+**Load this when:** the input is a "cracked" or "modded" APK you did not produce. It gives the audit that tells you what was injected, and why such a build is never a patching workbench.
+
 ## Why this exists
 
 A modded build of the exact app you are targeting is the most tempting shortcut available:

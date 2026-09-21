@@ -10,7 +10,7 @@ is comfortable — what does not.
 **Strength note, read before trusting any number here.** Every mechanism below was
 exercised on locally built fixtures, and the closed loop is measured: `simulate` relabels
 a fixture through a known bijection and `compare` re-derives that table **exactly, 218 of
-218 emitted opcodes, zero wrong entries, zero fabricated entries** (`docs/tool-verification/EXTENSION-vmp-diff.md`).
+218 emitted opcodes, zero wrong entries, zero fabricated entries** (`references/evidence-summary.md` §The capability matrix).
 What was **not** exercised is the other half of the premise: **no third-party hardening
 platform was contacted**. The assumption that a real engine performs a per-opcode
 substitution at stable instruction length is **inferred** from public VMP write-ups and is
@@ -56,8 +56,8 @@ never once been run against a real target.
 | 1 | Compile the coverage fixture into a dex + APK | **Full** — `scripts/vmp_diff_harness.py build`, measured | none | ~40 s on this machine (javac + d8 + aapt2), ~1 s of it the script | toolchain absent or version-drifted; `d8` rejects a non-existent `--output` directory, `aapt2 link` rejects `android:` attributes without `android.jar` |
 | 2 | **Submit to the hardening platform** | **None. Not automatable.** | 100 % — a browser, an account, sometimes a queue and a review | minutes to **days**; the platform decides | **the binding constraint of the whole route.** No public API; per-account rate limits; uploads are frequently gated behind registration; the artifact often comes back as a download page rather than a file path. A synthetic fixture may simply be **refused** (no real app shape, no certificate, no package identity) |
 | 3 | Retrieve the hardened output and extract its dex | Partial — if the output is an APK, `unzip` + `dexutil.load_dex` handles it | download and hand-off | seconds, once the file exists | output is an APK whose dex is *also* encrypted, or the platform returns only a repacked APK with a native loader and no readable dex |
-| 4 | Derive the correspondence | **Full** — `compare`, measured end to end | none | **sub-second** on a 3,065-instruction fixture | alignment slips (see §4); engine is not a pure relabelling |
-| 5 | Prove the derived table | Partial — the mechanical half is scripted and measured; the judgement is not | decide whether the held-out check was passed or merely not attempted | minutes | a table that is *self-consistent* but describes a stub (§5) |
+| 4 | Derive the correspondence | **Full** — `compare`, measured end to end | none | **sub-second** on a 3,065-instruction fixture | alignment slips (see); engine is not a pure relabelling |
+| 5 | Prove the derived table | Partial — the mechanical half is scripted and measured; the judgement is not | decide whether the held-out check was passed or merely not attempted | minutes | a table that is *self-consistent* but describes a stub () |
 | 6 | Render Smali from the restored stream | Full — `emit-smali`, measured | none | sub-second | table has holes; restored stream decodes short of the method end |
 
 **Conclusion, stated plainly: do not build a fully automatic pipeline.** Link 2 is
@@ -65,7 +65,7 @@ irreducibly manual — the platform has no interface a script can drive, and its
 cadence is not one a pipeline can wait on. The right shape is what this repository ships:
 
 - links 1, 4 and 6 as **reliable local tools** (they are deterministic and were measured);
-- link 5 as **a checklist plus one scripted test** (§5) — the judgement stays human;
+- link 5 as **a checklist plus one scripted test** () — the judgement stays human;
 - link 2 as **a documented manual step**, with its cost stated up front, so nobody writes
   an orchestrator that waits forever on a web form;
 - and links 4–5 **self-verifiable without the platform at all**, which is what `simulate`
@@ -139,13 +139,13 @@ decide whether the fourth is meaningful:
    row is `high`; more than one and the row is a `conflict`. Then the **reverse
    direction** — build `private byte → set of original opcodes` and flag every private byte
    claimed by more than one original. This reverse pass is not a nicety; it is the only
-   thing that catches the stub shape (§5).
+   thing that catches the stub shape ().
 4. **Emit a run-level verdict**, because a table is dangerous without one: `usable`,
    `partially-usable`, `not-usable`, or `not-applicable` with the reason. A `not-applicable`
    run exits non-zero.
 
 Unreadable opcodes are reported as `undetermined` with the reason — either the fixture
-never emitted them (§3) or the dex slot is unallocated. They are **not** guessed at.
+never emitted them () or the dex slot is unallocated. They are **not** guessed at.
 
 ## 5. Proving the table — the part that decides whether any of this is real
 
@@ -230,7 +230,7 @@ boundary hook answers in an hour.
 | Bodies present, decode as nonsense | Diagnose real VMP before anything else | `advanced-unpacking.md` §The honest boundary: real Dex VMP |
 | Need the private opcode mapping | Build the coverage fixture, then submit it by hand | `scripts/vmp_diff_harness.py build`; §2 of this file |
 | Asked to "automate the whole chain" | Say which link cannot be automated and what it costs | §2 — the platform step is manual, by construction |
-| Fixture coverage below ~90 % | Add the missing opcode classes before submitting | §3, and the `audit` report |
+| Fixture coverage below ~90 % | Add the missing opcode classes before submitting |, and the `audit` report |
 | Two dexes in hand | Derive the candidate table, read the verdict first | `scripts/vmp_diff_harness.py compare` |
 | About to trust a derived table | Run the closed loop, the injectivity check and a held-out subset | §5 — a/b/c are scripted |
 | Table complete | Render the skeleton; expect operands, not registers | `scripts/vmp_diff_harness.py emit-smali` |

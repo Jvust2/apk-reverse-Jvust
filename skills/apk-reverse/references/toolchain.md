@@ -433,7 +433,7 @@ script, and check the device architecture — the server binary is per-ABI.
 
 **A version mismatch here wastes the most time of any tool in this file.** A Dart decompiler built
 for a different engine version produces output that is subtly wrong rather than obviously broken.
-Pin the version first (`dart-aot.md` §1) and do not "try it and see".
+Pin the version first (`dart-aot.md`) and do not "try it and see".
 
 ## Using the kit's scripts instead of writing your own
 

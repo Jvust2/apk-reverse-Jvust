@@ -6,6 +6,9 @@ technique: rewriting **a few bytes in place**. Reach for it whenever the change 
 strictly safer than rebuilding a method — but only if you respect the constraints below, which are
 not optional and are not obvious.
 
+
+**Load this when:** the change fits in an existing instruction slot or constant, and you want nothing to move (no offset, try/catch or debug pointer invalidated). It gives the equal-length edit, its legality rules, and where it silently fails.
+
 ## Why equal-length, in numbers
 
 A method-level rebuild is not free. Measured on one R8-processed sample (4.32 MB single dex):
@@ -182,7 +185,10 @@ Keep these properties; they are what make the edit auditable a month later:
 
 - The change needs new instructions, a new register, or a different call — go to method rewriting.
 - The change is a **short string constant** whose new value is a different length — you cannot grow the
-  string in place. Equal-length string swaps work (`pitfalls.md` P2 on the string-id ordering guard);
-  different-length values need `dex_strpatch`-class tooling or a rebuild.
+  string in place. Equal-length string swaps work (`pitfalls.md` P2 on the string-id ordering guard).
+  **A different-length value is not a byte patch at all**: `scripts/dex_strpatch.py` enforces equal
+  length and will refuse it, so the work belongs to method rewriting (`references/dex-patching.md`)
+  or a full rebuild — do not look for a "different-length byte patcher" in this kit, there isn't one.
+
 - The target is a **multi-dex** app and you intend to move code between dexes. Byte patching stays
   inside one dex by definition.

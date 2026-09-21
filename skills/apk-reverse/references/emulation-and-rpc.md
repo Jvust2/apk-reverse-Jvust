@@ -17,6 +17,9 @@ This file is about choosing between them and driving both. The unpacking itself 
 `references/dynamic-frida.md`. What is new here is treating the target's own crypto as a **callable
 function** instead of a thing to understand.
 
+
+**Load this when:** you need the *output* of a routine rather than a change to the app -- a signature, a token, a cipher. It gives emulation with its environment-filling cost, against service-ifying the live function over Frida RPC.
+
 ## When emulation or RPC is the right move
 
 Reach for this file when any of these holds:
@@ -80,7 +83,7 @@ Default to **RPC first, emulation second**: the device already provides the envi
 per-call cost only starts to matter once you need volume. The two claims in this subsection
 (the day-scale cost of a Context/Binder/KeyStore-shaped library, and the RPC throughput ceiling)
 are **inferred** from the mechanism and from community practice — this repository has not emulated a
-commercial sample end to end, as `EXTENSION-emulation-rpc.md` states.
+commercial sample end to end, as `references/evidence-summary.md` §The capability matrix states.
 
 ## Part A — Unidbg
 
@@ -218,7 +221,7 @@ each is: inferred from community experience, not measured here.)
 
 ### Measured here
 
-See `docs/tool-verification/EXTENSION-emulation-rpc.md` for the exact commands and outputs behind
+See `references/evidence-summary.md` §The capability matrix for the exact commands and outputs behind
 every label in this section. Measured in that pass: the repository builds on Windows/JDK 17 once
 the compiler plugin is pointed at the JDK 8 API, the emulator boots, and one bundled test suite
 passes on the Dynarmic backend. **No target `.so` was emulated yet** — every per-library claim above
@@ -297,7 +300,7 @@ header on demand", which is the whole reason this route exists.
 ### What the live route costs — measured failure modes
 
 Every row below was hit against a real device during the verification pass behind this file
-(exact outputs in `docs/tool-verification/EXTENSION-emulation-rpc.md`):
+(exact outputs in `references/evidence-summary.md` §The capability matrix):
 
 | Failure | What it looks like | Handling |
 |---|---|---|

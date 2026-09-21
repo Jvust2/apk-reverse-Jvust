@@ -13,10 +13,10 @@ the death", that is `native-and-so.md` and `native-tamper-and-suicide.md`; if it
 this function really execute, and how often", it is here.
 
 **Claim strength.** `measured` = an exact command and its output exist in
-`docs/tool-verification/EXTENSION-native-dbi.md`. `inferred` = it follows from measured behaviour or
+`references/evidence-summary.md` §The capability matrix. `inferred` = it follows from measured behaviour or
 from documented behaviour of the tool. `unverified` = reported by someone else or reasoned from
 first principles without a run. The distinction matters more here than usual, because the honest
-result of this pass is that **the trace pipeline is unverified on the test device** — see §6.
+result of this pass is that **the trace pipeline is unverified on the test device** — see.
 
 ## 1. Which obfuscation are you looking at
 
@@ -32,7 +32,7 @@ Obfuscator-LLVM ships three transforms, and one target usually carries all three
 Worked example of the distinction: a flattened function with substituted instructions produces a
 trace whose histogram has an obvious top, but the arithmetic between dispatcher entries still tells
 you nothing. Flattening is a **control**-flow problem and the trace answers it; substitution is a
-**data**-flow problem and needs §5.
+**data**-flow problem and needs.
 
 **Reported, not verified here:** a community write-up of this exact pipeline — trace, aggregate,
 solve with a symbolic executor, patch the binary — is
@@ -56,8 +56,8 @@ script header in `scripts/stalker_trace.js`.
 | Which functions inside the module call each other? | Call edges from the same trace | same pair (`call` events) |
 | Which imported function does this stub reach? | Relocation table, not trace | `scripts/elf_plt.py` |
 | Where did the process die, and did it look arranged? | Crash record, signal, fault address, backtrace split by owner | `scripts/native_crash.py` |
-| What value must the state variable have to reach block X? | Constraint solving over the dispatcher | angr / Triton (§5) |
-| What is the value at a specific point for a specific input? | Deterministic per-instruction replay with memory operands | QBDI (§4) |
+| What value must the state variable have to reach block X? | Constraint solving over the dispatcher | angr / Triton () |
+| What is the value at a specific point for a specific input? | Deterministic per-instruction replay with memory operands | QBDI () |
 | What does this code do with no device at all? | Emulation of the `.so` with a synthetic environment | unidbg / Unicorn / QEMU |
 
 The first two rows are one run of one script — take both. `elf_plt.py` and `native_crash.py` are not
@@ -173,14 +173,14 @@ Diagnostics the report prints, and what they mean:
 | Need per-instruction values, memory operands, or a deterministic replay that can be re-run at a recorded PC | **QBDI** (QuarkslaB Dynamic Binary Instrumentation), via its Frida binding | An independent DBI engine with its own register/memory API; the trace is a program, not a log. It instruments at a different layer than Stalker, which matters on ART: Stalker translates the code it sees, QBDI exposes the instruction stream and its operands directly |
 | Need to hurt the target as little as possible while instrumenting a hot path | **QBDI** | Deterministic, no reliance on the app's own JIT/AOT output |
 | Need a result with **no device and no app process** — a hardened sample refuses to run, or the algorithm must be called thousands of times | **Emulation** (unidbg, Unicorn, QEMU) | Runs the `.so` in a synthetic environment with JNI stubs; completely different trade-off (environment fidelity for scale) |
-| Need "what input reaches block X" rather than "what happened for input I" | **Symbolic execution** (§5) | A trace is one path; a solver enumerates the condition |
+| Need "what input reaches block X" rather than "what happened for input I" | **Symbolic execution** () | A trace is one path; a solver enumerates the condition |
 
 **Stalker and ART do not compose for free.** The followed thread's code can be recompiled by ART's
 JIT while Stalker has already translated it, and a block's address is only meaningful inside one
 process lifetime. Practical consequences: keys in a log are `module+offset` and stay comparable
 across runs only for code that is mapped from file; do not compare a `libart`-materialized block
 address between two runs; and never place a follow/unfollow pair on a hot function (measured failure
-in §6).
+in).
 
 ### The cost is not linear, and on arm64 it decides the tool choice
 
@@ -194,7 +194,7 @@ Two costs decide whether Stalker is the right tool, and neither is visible in th
 - **What you let into the trace.** Every block of every library the thread touches is a candidate.
   Following into `libc` / `libart` / `libhwui` is how a four-second window becomes a device-wide
   event: measured here, one such run took the test phone's `load average` to `34.11` on 8 cores and
-  destroyed a co-running job's attach (§6).
+  destroyed a co-running job's attach ().
 
 `Stalker.exclude()` is the control for the second cost, and it is not optional.
 `scripts/stalker_trace.js` applies it before `follow()` from its `excludeModules` list and reports
@@ -216,7 +216,7 @@ Exclusion is what keeps the target alive — now `observed`, with the no-follow 
 would have died under frida anyway". But exclusion does **not** restore event delivery: the
 zero-event trace survived the treatment arm unchanged. Treat those as two problems, and do not offer
 `exclude` as the fix for a follow that delivers nothing. Commands and outputs:
-`docs/tool-verification/EXTENSION-stalker-exclude.md`.
+`references/evidence-summary.md` §The capability matrix.
 
 **arm64 also raises the floor.** PAC/BTI-bearing code gives a translator more ways to mis-handle a
 block than armv7 did, which is one more reason a trace that works on an emulator is not evidence
@@ -313,6 +313,6 @@ because the cheap answer is usually to switch to static analysis with `elf_plt.p
 - A dispatcher identification is a hypothesis about a block's role. Confirm it by disassembling the
   block and finding the table it indexes; a high count alone is also what a spin loop or a memory
   allocator's fast path looks like.
-- Write the product's before/after into `docs/tool-verification/`, with the exact command, the
+- Write the product's before/after into the evidence record condensed in `references/evidence-summary.md` §Where the full record lives, with the exact command, the
   module, the offsets, and the strength label. The next person's first question is "was the pipeline
   known to work when you got that zero", and the answer belongs in that record, not in a footnote.

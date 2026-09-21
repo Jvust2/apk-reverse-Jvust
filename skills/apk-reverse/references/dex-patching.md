@@ -2,6 +2,9 @@
 
 The single most important decision in a patch task. Get this wrong and you produce an APK that assembles perfectly and dies at runtime.
 
+
+**Load this when:** you have located the class and method to change and must choose the edit technique. It gives the least-destructive-first order and the signal that says a byte patch is not enough.
+
 ## Pick the least destructive technique that can express your change
 
 Ordered from safest to most dangerous.

@@ -723,7 +723,10 @@ def build_unsigned(apk, repl, out_apk, drop_signatures=True):
 ALIGN = 4
 # Entries Android requires to be STORED, and (for some) 4-byte aligned.
 ALIGNED_STORED = ('resources.arsc',)
-ALIGNED_PATTERNS = (re.compile(r'^lib/[^/]+\.so$'),)
+# ABI-split libraries live at `lib/<abi>/*.so`, so the pattern must allow one more path segment:
+# `^lib/[^/]+\.so$` matches nothing in a real APK and silently disabled STORED/alignment handling
+# for every native library -- measured on a 435-entry real package (zip-safety pass, 2026-09).
+ALIGNED_PATTERNS = (re.compile(r'^lib/(?:[^/]+/)*[^/]+\.so$'),)
 FILLER_NAME = 'META-INF/ALIGN.RSV'
 
 

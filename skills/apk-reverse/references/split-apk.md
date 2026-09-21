@@ -21,7 +21,10 @@ which route is legal from what the members actually carry, prints the reason, an
 **Strength labels** (same three this repository uses everywhere): **observed** = reproduced with an
 exact command and output; **inferred** = follows from observed facts, step not executed;
 **unverified** = reported or assumed, not independently confirmed. The measurements behind this
-file are recorded in `docs/tool-verification/EXTENSION-split-apk.md`.
+file are recorded in `references/evidence-summary.md` §The capability matrix.
+
+
+**Load this when:** the target arrives as `base.apk` plus `split_config.*.apk`, or a rebuild is refused as a set although every member verifies. It gives reading the set, merge versus unified re-signing, and the refusal each mistake produces.
 
 ## 1. What the set is
 
@@ -87,8 +90,8 @@ Two traps, both **observed**:
 
 **Do not test by reinstalling a pulled set under its own package name.** It is already installed on
 that device, owned by the vendor certificate you do not have, so the install fails for a reason that
-has nothing to do with your pipeline (§6). Either work on a set you own, or rename the pulled one
-(§7) to get an installable fixture.
+has nothing to do with your pipeline (). Either work on a set you own, or rename the pulled one
+() to get an installable fixture.
 
 ## 3. The decision: merge or resign
 
@@ -115,7 +118,7 @@ Failure modes, one per route:
   delivered as one — `repack.py` prints `DROPPED n entry/ies` and refuses unless you pass
   `--drop-split-resources`, so the loss cannot be silent.
 - **merge**, when the base still declares `isSplitRequired="true"`: install succeeds and start is
-  refused (`INSTALL_FAILED_MISSING_SPLIT`, §6). The attribute has to be cleared first, and that is a
+  refused (`INSTALL_FAILED_MISSING_SPLIT`,). The attribute has to be cleared first, and that is a
   binary-AXML edit.
 - **resign**, when one member is missed: the set fails as a set, with a signature error naming the
   package. Sign the directory, not a list you typed by hand.
@@ -150,7 +153,7 @@ adb shell "su -c 'pm install-multiple -r /data/local/tmp/set/*.apk'"   # when an
 ```
 
 **The signature must cover every member**, and `--abi`/density selection happens at install time, not
-at signing time — sign them all, let the installer pick (see §6).
+at signing time — sign them all, let the installer pick (see).
 
 ### Toolchain: `uber-apk-signer` is optional, `apksigner` is not
 
@@ -196,7 +199,7 @@ If you genuinely need one standalone file for a bundle whose resources are split
 
 1. **`bundletool build-apks --mode=universal`** (the vendor tool, needs the original `.aab`) — this is
    what merges resources correctly, and it is the only route that does.
-2. **Keep the split set** and install it as a set (§4).
+2. **Keep the split set** and install it as a set ().
 3. **Accept the downgrade** with `--drop-split-resources`, and say so in the delivery.
 
 **Manifest constraints when you do merge — and when you patch any split at all.** These attributes
@@ -208,7 +211,7 @@ miss because they live in binary AXML:
 | `split="config.xxhdpi"` | `<manifest>` of a **split** | Identifies the member. A split whose `package` differs from the base's, or whose `split` name is duplicated, is refused as a set |
 | `configForSplit="base"` | `<manifest>` of a split | Ties a configuration split to a feature module. Changing package/module names without updating it silently detaches the split |
 | `isFeatureSplit="true"` | `<manifest>` of a feature split | Marks an install-time/on-demand module. A merge that folds code in but leaves the attribute declared describes a member that no longer exists |
-| `isSplitRequired="true"` | `<manifest>` of the **base** | The platform refuses to start a base that believes it is incomplete. This is the one that breaks merged builds (§3) |
+| `isSplitRequired="true"` | `<manifest>` of the **base** | The platform refuses to start a base that believes it is incomplete. This is the one that breaks merged builds () |
 
 Read them without a decompiler through `scripts/repack.py`'s own AXML reader (`--split-mode analyze`
 prints the `split` name per member; `inspect_apk()` returns `package`, `split`, `configForSplit`,
@@ -297,7 +300,7 @@ can use. There is nothing to select on your side.
   into a base and then writing the archive without that alignment produces an install that succeeds
   and a start that dies in the linker. `repack.py` writes uncompressed `lib/**` 4-byte aligned, and
   `zipalign -p -f 4` adds the page alignment the loader wants for them.
-- **A placeholder `resources.arsc` is not a resource split** (§1). Blocking on "has an arsc" refuses
+- **A placeholder `resources.arsc` is not a resource split** (). Blocking on "has an arsc" refuses
   legal merges.
 - **Do not `zipalign` after signing to "fix" a member.** It rewrites the archive and invalidates the
   signature. Align, then sign.
@@ -316,7 +319,7 @@ can use. There is nothing to select on your side.
   choice.
 - **It does not split a monolithic APK back into modules**, and it cannot turn a `.aab` into APKs —
   that is `bundletool`, and the `.aab` is the input it needs.
-- **`--split-mode merge` covers code and native libraries only** (§5). Feature-split *code* folds;
+- **`--split-mode merge` covers code and native libraries only** (). Feature-split *code* folds;
   feature-split *resources* do not.
 - The install-failure texts in §6 are the shape the platform produces; **the exact wording varies by
   Android version and by OEM installer**. Read the text after the constant, not the constant.

@@ -2,6 +2,9 @@
 
 The difference between a hobby patch and a usable deliverable is verification. "It assembles" and "the log is quiet" are not verification.
 
+
+**Load this when:** you are about to claim the work is done, or you need to define done for a reviewer. It gives the claim ladder, the evidence chain, and what each deliverable form has to show before it counts.
+
 ## The claim ladder
 
 Each rung is stronger evidence. Climb as high as the task requires, and **state clearly which rung you reached**.

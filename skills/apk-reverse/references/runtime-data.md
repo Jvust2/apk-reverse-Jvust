@@ -2,6 +2,9 @@
 
 Sometimes the cheapest fix is not code at all, but a value in app data. And sometimes that is exactly the wrong fix, because it does not survive a fresh install (`pitfalls.md` P11).
 
+
+**Load this when:** the cheapest fix looks like a stored value rather than code -- DataStore, SharedPreferences, SQLite, a protobuf cache, a token. It gives how to edit each safely, and how to tell a value the app rewrites from one it keeps.
+
 ## Decide first: data or code?
 
 | Question | Answer |

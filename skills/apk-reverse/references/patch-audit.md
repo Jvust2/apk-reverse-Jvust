@@ -8,6 +8,9 @@ Two independent questions, and they fail independently:
 A patch can land and be illegal (the class fails to load). It can also fail to land while every
 build step reports success. Both are silent, and each needs its own check.
 
+
+**Load this when:** you must prove the edit landed **and** that it is legal. It gives the length-versus-bytes comparison that catches equal-length blind spots, verifier-level legality, and how to report a patch that did not apply.
+
 ## 1. Did it land? Compare *length*, not bytes
 
 The naive check is a byte-level diff of the target method against the original.

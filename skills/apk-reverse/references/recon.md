@@ -2,6 +2,9 @@
 
 Ten minutes here prevents hours of wrong work. Answer the five questions from `SKILL.md` with concrete evidence.
 
+
+**Load this when:** starting any new sample. It gives identity, packer detection, embedded SDKs, ABI, and where the app's own code lives -- the ten minutes that prevent hours of wrong work.
+
 ## 1. Identity
 
 ```bash
@@ -136,7 +139,7 @@ For a **Kotlin/Java app**, note the module layout: app code often lives in a sma
 python scripts/dex_strings.py <dex_dir> --find 'Lcom/example/app/' --per-file
 ```
 
-Consequence for editing: you usually only need to replace **one or two dex files**, which keeps the repack minimal. When the app is packed, run this check against the **dumped** dexes, not the ones on disk (§2).
+Consequence for editing: you usually only need to replace **one or two dex files**, which keeps the repack minimal. When the app is packed, run this check against the **dumped** dexes, not the ones on disk ().
 
 ## 4. SDK and library inventory
 

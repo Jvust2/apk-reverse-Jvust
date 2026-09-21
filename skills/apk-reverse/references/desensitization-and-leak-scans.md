@@ -22,10 +22,13 @@ A rule that only handles the first side produces "a document about nothing". A r
 handles the second produces a leak. Both get fixed by the same artifact: an explicit list of
 what is *exempt*, in code, that can be read and argued with.
 
+
+**Load this when:** you are about to publish anything derived from real work -- an evidence file, a transcript, a README -- or a leak scan reports a hit. It gives the must-leave/must-stay split and the scanner's exit semantics.
+
 ## Strength labels
 
 - **observed** — a command was run here and its output is quoted in the text or recorded in
-  `docs/tool-verification/`.
+  the evidence record condensed in `references/evidence-summary.md` §Where the full record lives.
 - **inferred** — follows from an observed fact or from documented mechanism; the step itself
   was not executed.
 - **unverified** — assumed, or reported elsewhere, and not reproduced in this repository.
@@ -90,7 +93,7 @@ above — this file stating the decision is itself the hit — and the fourth is
 Every other category is at zero. That ratio is why the gate's pass condition lives in
 `--fail-on` and not in an exemption table: the documentation of the decision *is* the residue, so
 a gate that failed on it would be failing on its own rationale. The transcript is in
-`docs/tool-verification/EXTENSION-desensitization.md`.
+`references/evidence-summary.md` §The capability matrix.
 
 **What is a leak here, in contrast** — the shapes worth reporting: `package="…"` in a manifest
 line, a bundle id after `pm path` / `pidof` / `ps -A` / `component=`, a 16-character
@@ -107,7 +110,7 @@ Three consequences, each observed by writing the scanner for this repository:
 
 - **A range of four digits separated by dots is an IP address only if nothing nearby says
   "version".** `JDK 17.0.4.1`, `build-tools 34.0.0` and `frida 16.7.19` are the shapes the first
-  version of the scanner reported twenty times across `docs/tool-verification/`. Context
+  version of the scanner reported twenty times across the evidence record condensed in `references/evidence-summary.md` §Where the full record lives. Context
   (`jdk`, `python`, `frida`, … immediately before the match) separates them.
 - **A 16-character uppercase token is a device serial only if it carries a letter.** Stack
   addresses from a tombstone (`0000000040001000`) and hex protocol fixtures

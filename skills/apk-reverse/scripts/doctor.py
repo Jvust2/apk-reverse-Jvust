@@ -561,7 +561,10 @@ def main():
                               'blocked': counts['blocked'], 'unknown': counts['unknown']},
         }
         print(json.dumps(payload, indent=2, ensure_ascii=False))
-        print('RESULT=%s' % token)
+        # No `RESULT=` line on this path: appending one makes the stream invalid JSON for a caller
+        # doing `--json | jq` or `json.loads(stdout)`, which is what `--json` is for. The status is a
+        # field in the document, and the exit code carries the same meaning. (Same defect that was
+        # found in check_commands.py, and it was found here by trying to parse this output.)
         return code
 
     print('=' * 74)

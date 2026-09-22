@@ -56,6 +56,13 @@ python scripts/rasc_build.py --build            # needs git + rustup; ~2 min
 python scripts/rasc_build.py --verify app.apk   # compares class sets against droidasc, fails on a difference
 ```
 
+**It is a registered capability, so G2 does not have to guess:** `doctor.py` reports `dex_index_rust`
+as `OK` when a binary is present (PATH, `APKREV_TOOLS`, or the work-area path `rasc_build.py` builds
+into) and `BLOCKED` with that build command as the next action when it is not — alongside
+`dex_index_python` for the `pip install` route. A machine with neither is not stuck: the Python
+indexer is one command away, and the two are cross-checked against each other by
+`rasc_build.py --verify`.
+
 **The one thing to know before trusting its `getclass`:** on an `enum` whose constants override an
 abstract method, the outer class is printed as a bare constant list and the per-constant bodies are
 **not inlined** — no warning, and none in the Python tool either, because both leave those bodies in

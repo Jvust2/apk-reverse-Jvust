@@ -190,6 +190,27 @@ ATOMS = {
         'est_minutes': 5,
         'basis': 'unverified',
     },
+    'tool:rasc': {
+        'name': 'rasc (Rust ASC: whole-APK dex index)',
+        'kind': 'tool',
+        'tool': 'rasc',
+        'install': 'it ships no artifact -- run `python scripts/rasc_build.py --build` '
+                   '(needs git plus rustup; on Windows the GNU host toolchain also needs a '
+                   '64-bit MinGW-w64 gcc), or set RASC to an existing binary',
+        'est_minutes': 5,
+        # Measured here: a clean clone built in 117 s once the toolchain existed, which is the
+        # toolchain-acquisition cost on top. The toolchain itself is the larger part and is
+        # machine-specific, so the estimate covers the build step and says so.
+        'basis': 'measured',
+    },
+    'tool:droidasc': {
+        'name': 'droidasc (Python ASC: whole-APK dex index)',
+        'kind': 'tool',
+        'tool': 'droidasc',
+        'install': 'pip install droidasc',
+        'est_minutes': 1,
+        'basis': 'measured',
+    },
     'tool:apktool': {
         'name': 'apktool (resource round-trip)',
         'kind': 'tool',
@@ -317,6 +338,24 @@ GATE_FILES = {
 # `depends_on` is expanded recursively, so a prerequisite's blockers are inherited.
 
 CAPABILITIES = {
+    'dex_index_rust': {
+        'name': 'Whole-APK dex index and single-class decompilation (rasc, the Rust ASC)',
+        'required': ['python39', 'tool:rasc'],
+        'optional': [],
+        'scripts': ['rasc_build.py'],
+        'note': 'the fastest indexer this kit documents -- same answers as droidasc on '
+                'both archives measured, 4-15x quicker -- but it ships no prebuilt '
+                'artifact, so `rasc_build.py --build` is how a machine acquires it. Its '
+                'outer-class view of an enum does not inline the constant bodies; the '
+                'subclasses decompile fine (references/rasc-and-droidsaw.md)',
+    },
+    'dex_index_python': {
+        'name': 'Whole-APK dex index and single-class decompilation (droidasc, the Python ASC)',
+        'required': ['python39', 'tool:droidasc'],
+        'optional': [],
+        'note': 'one `pip install droidasc` away, and the cross-check for the Rust one: '
+                'their class-definition sets are compared in scripts/rasc_build.py --verify',
+    },
     'static_dex': {
         'name': 'Static dex / zip / strings analysis',
         'required': ['python39'],
@@ -520,6 +559,18 @@ class Probe:
         if name in self._tool_cache:
             return self._tool_cache[name]
         hit = shutil.which(name)
+        if not hit and name == 'rasc':
+            # rasc ships no artifact, so a machine that followed this kit's own build step has it
+            # under the repository's ignored work area rather than on PATH. Accepting that location
+            # keeps the capability table from reporting BLOCKED at an agent that already did the
+            # work -- the same reasoning as APKREV_TOOLS, for the one tool whose install step is a
+            # build (scripts/rasc_build.py).
+            for cand in (os.path.join(REPO_ROOT, 'tools', '_work', 'rust', 'target', 'release',
+                                      'rasc' + ('.exe' if os.name == 'nt' else '')),
+                         os.environ.get('RASC', '')):
+                if cand and os.path.isfile(cand):
+                    hit = cand
+                    break
         if not hit:
             exts = [''] if os.name != 'nt' else ['.exe', '.bat', '.cmd', '.ps1', '']
             for d in extra_tool_dirs():

@@ -443,6 +443,11 @@ an install that `PATH` does not know about (the common case for `apksigner` and
 
 ## Read this first
 
+**This project is published for learning, research and authorized security testing only.** It ships
+no exploit payloads, no target data and no third-party binaries — it is a method, a set of scripts
+and an evidence record. You are responsible for having the right to analyze whatever you point it at;
+see **Disclaimer** at the end of this file.
+
 `skills/apk-reverse/references/pitfalls.md`. It is the most valuable file here — every entry is a
 failure that produced a broken artifact while looking completely healthy.
 
@@ -545,3 +550,33 @@ and so the gaps are written down where the next person will find them.
 ---
 
 Proudly supported by the [LINUX DO](https://linux.do) community.
+
+## Disclaimer
+
+**For learning, research and authorized security testing only.** Every script, reference and
+recorded result in this repository exists to explain *how* Android application analysis works, so
+that practitioners can reason about the tools they already own. Nothing here is a service, a
+product, or an endorsement of any particular use.
+
+- **Authorized targets only.** Use this on applications you own or have been explicitly permitted to
+  analyze, on public CTF/challenge material, or in a sandbox you control. Analyzing software you have
+  no right to analyze may be unlawful where you live, and that determination is yours to make, not
+  this repository's.
+- **No warranty, no fitness for any purpose.** The material is provided *as is*, without warranty of
+  any kind. Results are recorded as they were measured on one machine at one time; nothing here
+  promises that a route will work on your target, your device, your toolchain or today's app version.
+- **Verify before you trust; back up before you act.** Several scripts modify artifacts (dex, APK,
+  `.so`, stored app data) and some operate on a rooted device. Keep your own copies, work on
+  duplicates, and read `SKILL.md`'s gates before running anything against something you care about.
+- **Your use is your responsibility.** The authors and contributors accept no liability for any loss,
+  damage, legal consequence or service interruption arising from the use or misuse of this
+  repository, and are not affiliated with, endorsed by, or acting on behalf of any application,
+  vendor or platform it may be used to examine.
+- **Test data is not distributed here.** Samples, dumps and device artifacts are deliberately absent
+  from the tree (`.gitignore` excludes them) and live only in a local, ignored workspace. Anything you
+  obtain to follow along is yours to keep safe and to delete when you are done with it — follow your
+  local rules and the terms that came with the sample. What this repository *does* publish is the
+  method and the evidence, with all target identity removed.
+- **No affiliation.** Names of tools, libraries, hardening products and public challenge targets
+  appear only to make the material reusable; they belong to their respective owners and this project
+  is not connected to them.

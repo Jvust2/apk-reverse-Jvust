@@ -541,3 +541,7 @@ for one measurement pass against a real target: what each script actually did, w
 method confirmed it, which defects were found, and which scenarios the target could not exercise.
 It exists so the **Coverage** claims in `SKILL.md` can be checked against runs instead of trusted,
 and so the gaps are written down where the next person will find them.
+
+---
+
+Proudly supported by the [LINUX DO](https://linux.do) community.

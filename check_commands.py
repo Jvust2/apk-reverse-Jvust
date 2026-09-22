@@ -94,6 +94,13 @@ EXTERNAL_SCRIPTS = {
         "blutter's own environment script, run from inside the blutter checkout -- the "
         "record's preceding line is `git clone --depth 1 worawit/blutter` "
         "(docs/tool-verification/TOOL-VERDICTS.md)",
+    'dcc.py':
+        "the dcc tool's own entry point, run from inside its checkout -- the record's "
+        "preceding line is `cd tools/_work/bench/repos/dcc`, and this repository ships "
+        "no dcc.py (docs/tool-verification/EXTENSION-java2c.md). Declared rather than "
+        "inferred because the `cd`-then-bare-name form only skips as workbench-after-cd "
+        "while the gitignored tools/ tree happens to exist locally; a clean checkout has "
+        "no such file to recognise, and without this entry the gate reported drift there.",
 }
 
 # Commands an evidence record *quotes* rather than offers. The key is (document,

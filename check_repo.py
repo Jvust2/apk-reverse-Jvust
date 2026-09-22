@@ -198,17 +198,33 @@ def check_references(name, skill_dir, root_docs):
             print('  MISSING %s' % x)
         fail.extend(missing)
 
-    # Reachability: nothing may be orphaned from the skill entry point.
+    # Reachability: nothing may be orphaned from the entry point.
+    #
+    # The registration surface is SKILL.md **plus** `references/routing.md`, because this repository
+    # splits the two: SKILL.md keeps the symptom index (symptom -> file must stay one hop) and the
+    # reference/script inventory lives in the routing file, which `check_routing.py` in turn proves
+    # names every reference and every script. Reading only SKILL.md here would report a correctly
+    # registered file as orphaned -- and did, for every file added after that split.
+    routing = os.path.join(ref_dir, 'routing.md')
     bodies = read(os.path.join(skill_dir, 'SKILL.md')) + root_docs
+    if os.path.isfile(routing):
+        bodies += read(routing)
     for f in sorted(refs):
         if f.endswith('.md') and f not in bodies:
-            fail.append('%s: references/%s is not mentioned anywhere' % (name, f))
+            fail.append('%s: references/%s is named neither in SKILL.md, README.md nor '
+                        'references/routing.md' % (name, f))
             print('  UNLISTED references/%s' % f)
 
     all_docs = bodies
     for f in sorted(refs):
         if f.endswith('.md'):
             all_docs += read(os.path.join(ref_dir, f))
+    for sub in ('', 'coverage', 'precedents'):
+        d = os.path.join(ref_dir, sub) if sub else ref_dir
+        if os.path.isdir(d):
+            for f in sorted(os.listdir(d)):
+                if f.endswith('.md') and os.path.isfile(os.path.join(d, f)):
+                    all_docs += read(os.path.join(d, f))
     for s in sorted(scripts):
         if s.endswith(('.py', '.js')) and s not in all_docs:
             fail.append('%s: scripts/%s is undocumented' % (name, s))

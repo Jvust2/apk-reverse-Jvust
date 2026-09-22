@@ -70,6 +70,7 @@ those are called out in the matrix rather than buried here.
 | `EXTENSION-split-apk.md` | Two real split sets through both branches: unified re-signing, the merge that is refused by design, the merge that succeeds, and the signer chain this host actually needs |
 | `EXTENSION-reconstruction.md` | The reconstruction pass: the doctor capability closure (a JDK-only PATH used to report "can re-sign", now `BLOCKED` with a next action), the zip rebuild that stops dropping per-entry metadata (`zipalign -c -v 4` fails the old output and passes the new), and `check_commands.py` catching a documented flag that does not exist |
 | `EXTENSION-test-harness.md` | The executable half of the evidence: what `tests/` asserts and what it measured, the `dex_patch_bytes` regression reproduced byte-for-byte, the 153 skips and 26 xfails that form the exit-code work order, the device-bound exclusion forced by an incident where the suite drove a real phone, and CI written but never run |
+| `EXTENSION-rasc.md` | The Rust ASC measured against the Python one: identical class-definition sets on two archives, the speedup per scenario, the build (no prebuilt artifact exists, and a 32-bit MinGW cannot link it), and **the enum shape whose method bodies it drops with no warning** |
 | `EXTENSION-protobuf-raw.md` | A schema-free decoder cross-checked against the official runtime and a real DataStore container, with the packed-boundary and proto3-zero ambiguities reproduced on real bytes |
 
 ## Absorption-pass record

@@ -208,6 +208,9 @@ references/               loaded on demand, one topic each
                               assertion, measured pit-falls, and the write-back checklist
   routing.md                  the on-demand inventory: every reference with when to load it, every
                               script with what it does, and a mirror of the symptom index
+  rasc-and-droidsaw.md        the Rust re-implementation of the ASC indexer: measured speedup and
+                              identical class sets, the enum shape where it silently drops bodies,
+                              and how to build and verify it
   evidence-summary.md         the condensation that ships with the skill: capability, one-line
                               conclusion, strength, and the evidence you can actually open in an
                               installed copy
@@ -365,6 +368,9 @@ scripts/                  parameterized, path-agnostic
   kernelsu_syscall_mask.py    generate a KernelSU/APatch syscall-masking scaffold: an installable
                               userspace module skeleton plus KPM/LKM/eBPF kernel-side templates, each
                               with its version gate and an explicit unverified label
+  rasc_build.py               build and verify rasc, the Rust ASC re-implementation:
+                              --check what is present, --build clone plus cargo, --verify an APK
+                              against droidasc and fail on any class-set difference
   scan_leaks.py               scan a repository for target identity before publishing it: bundle ids
                               in manifest / `pm` / `ps` contexts, serial-shaped tokens, PATs, inline
                               appkey assignments, literal endpoints, host user paths. Exemptions for

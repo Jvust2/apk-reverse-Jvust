@@ -36,12 +36,10 @@ Notes:
   * Output is written to --out; nothing on device is touched.
   * The winning parameters are printed as a copy-pasteable line for --encode.
 """
-from __future__ import annotations
 
 import argparse
 import base64
 import binascii
-import json
 import re
 import sys
 import time

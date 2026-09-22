@@ -23,7 +23,6 @@ Requires, to build: git, and a Rust toolchain (rustup). On Windows the GNU host 
 64-bit MinGW-w64 gcc on PATH -- the 32-bit MinGW that ships with some setups cannot link a 64-bit
 binary and fails with "64-bit mode not compiled in".
 """
-from __future__ import annotations
 
 import argparse
 import json
@@ -233,13 +232,17 @@ def main(argv=None):
             print('cannot build: missing %s' % ', '.join(missing), file=sys.stderr)
             print('RESULT=capability_missing')
             return EXIT_CAPABILITY
-        target = payload['toolchain'].get('gcc_target') or ''
+        gcc_target = payload['toolchain'].get('gcc_target') or ''
         built = build(args.work, args.jobs)
         if not built:
             payload['result'] = 'build_failed'
-            payload['next_action'] = ('read the cargo output above; on Windows the GNU host '
-                                      'toolchain needs a 64-bit MinGW-w64 gcc, and a 32-bit MinGW '
-                                      'fails with "64-bit mode not compiled into"')
+            # The hint is only useful when the linker target is the 32-bit one, which is the
+            # failure this actually hit: name the target rather than printing a generic list.
+            payload['next_action'] = (
+                'read the cargo output above; the GNU host toolchain needs a 64-bit MinGW-w64 '
+                'gcc and this machine reports %r' % (gcc_target or 'no gcc on PATH') if
+                'mingw32' in gcc_target or not gcc_target else
+                'read the cargo output above')
             if args.json:
                 print(json.dumps(payload, indent=2))
             print('RESULT=build_failed')

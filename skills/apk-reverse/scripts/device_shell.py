@@ -36,7 +36,6 @@ Usage as a tool:
 
 Exit codes: 0 success / 1 the value was refused / 2 usage error / 4 internal error.
 """
-from __future__ import annotations
 
 import argparse
 import re

@@ -60,7 +60,6 @@ Usage
 Exit codes: 0 = every capability ok, 3 = at least one blocked, 2 = usage error,
 4 = internal error. The last line is `RESULT=<token>`.
 """
-from __future__ import annotations
 
 import argparse
 import ast
@@ -700,8 +699,8 @@ class Probe:
             rc, v = _run(['adb', '-s', serial, 'shell', 'su -c id'], timeout=15)
             out['root'] = rc == 0 and 'uid=0' in v
             rc, ps = _run(['adb', '-s', serial, 'shell', 'ps -A'], timeout=20)
-            hits = [l for l in ps.splitlines()
-                    if 'frida' in l.lower() and 'grep' not in l.lower()]
+            hits = [row for row in ps.splitlines()
+                    if 'frida' in row.lower() and 'grep' not in row.lower()]
             if rc == 0:
                 out['frida_server'] = bool(hits)
         self._device = out

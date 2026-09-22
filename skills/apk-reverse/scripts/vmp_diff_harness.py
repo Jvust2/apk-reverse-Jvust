@@ -49,7 +49,10 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 try:
     import dexutil
 except ImportError:                                       # pragma: no cover
-    dexutil = None
+    # The optional-dependency idiom this repository uses: the name is rebound to None so the caller
+    # can test for it. mypy objects because `dexutil` is now "may be None", which is exactly the
+    # truth the `if dexutil is None` guards below rely on -- say so rather than narrowing the type.
+    dexutil = None  # type: ignore[assignment]
 
 
 # ---------------------------------------------------------------------------
@@ -1327,8 +1330,8 @@ def cmd_compare(args):
             "orig": op, "orig_hex": "0x%02x" % op,
             "name": dexutil.OP_NAMES[op],
             "reason": UNREACHABLE.get(op) or
-                      "the original never emits this opcode, so there is no "
-                      "known-plaintext instance to read a substitution from",
+            ("the original never emits this opcode, so there is no "
+             "known-plaintext instance to read a substitution from"),
         })
 
     # reverse direction: a private byte claimed by two different originals

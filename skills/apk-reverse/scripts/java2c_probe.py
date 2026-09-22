@@ -135,13 +135,16 @@ class Dex(object):
             return
         try:
             file_size = self._u32(0x20)
-            map_off = self._u32(0x34)
+            # Read for completeness against the dex header layout: this function walks the
+            # header field by field and a reader comparing it to the format spec should not
+            # have to wonder whether a field was skipped. Not every field feeds the verdict.
+            map_off = self._u32(0x34)  # noqa: F841
             string_ids_size = self._u32(0x38)
             string_ids_off = self._u32(0x3C)
             type_ids_size = self._u32(0x40)
             type_ids_off = self._u32(0x44)
-            proto_ids_size = self._u32(0x48)
-            proto_ids_off = self._u32(0x4C)
+            proto_ids_size = self._u32(0x48)  # noqa: F841 (see map_off above)
+            proto_ids_off = self._u32(0x4C)  # noqa: F841 (see map_off above)
             method_ids_size = self._u32(0x58)
             method_ids_off = self._u32(0x5C)
             class_defs_size = self._u32(0x60)

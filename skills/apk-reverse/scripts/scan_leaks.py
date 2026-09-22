@@ -55,7 +55,6 @@ is still scanned even if it sits under an excluded name.
 
 Pure standard library, python3, no third-party imports. POSIX and Windows.
 """
-from __future__ import annotations
 
 import argparse
 import json
@@ -374,6 +373,7 @@ def build_rules():
 # --------------------------------------------------------------------------------------
 # Walking
 # --------------------------------------------------------------------------------------
+
 
 TEXT_EXTENSIONS = (".md", ".py", ".js", ".json", ".txt", ".yml", ".yaml", ".sh", ".ps1",
                    ".toml", ".cfg", ".ini", ".xml", ".java", ".smali", ".html", ".csv")

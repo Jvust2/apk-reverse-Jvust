@@ -100,7 +100,6 @@ Exit codes (see references/long-task-discipline.md and the kit-wide convention):
 ``evidence``, ``warnings``, ``next_action``) followed by the same final
 ``RESULT=<token>`` line every other script in this kit ends with.
 """
-from __future__ import annotations
 
 import argparse
 import hashlib

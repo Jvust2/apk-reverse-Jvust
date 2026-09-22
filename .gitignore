@@ -47,3 +47,8 @@ __pycache__/
 .vscode/
 .idea/
 .DS_Store
+
+# local input material -- the same rule as 存在问题和例子/: the reports these passes are based on
+# are the user's material, not content of this repository
+新的建议和思路/
+朋友全面审查和建议/

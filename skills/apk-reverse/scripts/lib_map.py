@@ -33,7 +33,6 @@ Reading it:
   * If the library you patched does not appear here at all, your patch cannot
     matter. That is a plan problem, not a patch problem.
 """
-from __future__ import annotations
 
 import argparse
 import json
@@ -41,7 +40,6 @@ import os
 import re
 import subprocess
 import sys
-from collections import defaultdict
 
 E_MACHINE = {
     0x03: "x86", 0x3E: "x86_64", 0x28: "arm", 0xB7: "aarch64",

@@ -18,7 +18,6 @@ Usage:
 
 Exit code is 0 when no BLOCKER was found, 1 otherwise. WARN never fails the run.
 """
-from __future__ import annotations
 
 import argparse
 import json
@@ -76,7 +75,8 @@ def main() -> int:
         ("python", "all scripts"),
     ):
         found = shutil.which(tool)
-        r.add(OK if found else WARN, "host:" + tool, found or "not on PATH", "" if found else "install it if you need " + why)
+        r.add(OK if found else WARN, "host:" + tool, found or "not on PATH",
+              "" if found else "install it if you need " + why)
     for tool in ("apksigner", "zipalign", "aapt", "aapt2"):
         found = shutil.which(tool)
         r.add(OK if found else INFO, "host:" + tool, found or "not on PATH",
@@ -207,7 +207,8 @@ def main() -> int:
                       "this is the ABI the package manager chose for THIS device")
             maps = su("cat /proc/$(pidof %s | awk '{print $1}')/maps 2>/dev/null | head -1" % a.pkg)
             if maps.strip():
-                r.add(INFO, "target:running", "process is running", "prefer a clean cold start before measuring anything")
+                r.add(INFO, "target:running", "process is running",
+                      "prefer a clean cold start before measuring anything")
             else:
                 r.add(OK, "target:running", "not running", "")
 
@@ -230,7 +231,7 @@ def main() -> int:
 def finish(r: Report, as_json: bool) -> int:
     if as_json:
         print(json.dumps({"worst": r.worst(),
-                          "rows": [dict(level=l, area=ar, detail=d, fix=f) for l, ar, d, f in r.rows]},
+                          "rows": [dict(level=lv, area=ar, detail=d, fix=f) for lv, ar, d, f in r.rows]},
                          indent=2, ensure_ascii=False))
         return 1 if r.worst() == BLOCKER else 0
 

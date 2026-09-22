@@ -43,7 +43,6 @@ Reading the output
   * Identical hashes across samples -> nothing is changing. Stop waiting and go
     find out why (this is the stall detector).
 """
-from __future__ import annotations
 
 import argparse
 import hashlib

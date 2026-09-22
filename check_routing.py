@@ -24,7 +24,6 @@ import argparse
 import glob
 import json
 import os
-import re
 import sys
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
@@ -38,9 +37,12 @@ ROUTE = os.path.join(REFS, 'routing.md')
 # the row's *cells*, not the whole line -- every data row also starts and ends with `|`, so any
 # whole-line pattern loose enough to accept a separator also accepts every data row, and the reverse
 # mistake drops every data row and reports an intact inventory as broken.
+
+
 def is_separator(row):
     cells = [c for c in row.strip().strip('|').split('|')]
     return bool(cells) and all(c.strip() and set(c.strip()) <= set('-:') for c in cells)
+
 
 # Headings are matched by prefix: they contain an em dash, and comparing against an ASCII hyphen
 # silently reports "table not found" instead of failing.

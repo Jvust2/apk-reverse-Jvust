@@ -52,9 +52,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from dexutil import (  # noqa: E402
-    Dex, IF_TEST, IF_TESTZ, INVOKE_OPS, MOVE_RESULT_OPS, load_dex,
-)
+from dexutil import IF_TEST, IF_TESTZ, INVOKE_OPS, MOVE_RESULT_OPS, load_dex  # noqa: E402
 
 _KIND_MAP = {
     "if-test": IF_TEST,
@@ -107,7 +105,7 @@ class Filter(object):
 def _operand_text(dex, insn):
     """All names this instruction mentions (class, method, field, string)."""
     parts = []
-    op, pos = insn["op"], insn["off"]
+    op = insn["op"]
     if op in INVOKE_OPS:
         cls, nm, ds = dex.method(int.from_bytes(insn["raw"][2:4], "little"))
         parts += [cls, nm, ds]

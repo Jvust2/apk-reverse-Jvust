@@ -25,7 +25,6 @@ On the root README:
 import ast
 import os
 import re
-import re
 import subprocess
 import sys
 
@@ -46,7 +45,7 @@ NAMED_PATH_RE = re.compile(
 BARE_PATH_RE = re.compile(r'(?<![\w/])(?P<sub>references|scripts)/'
                           r'(?P<file>[A-Za-z0-9_\-]+\.(?:md|py|js))')
 
-fail = []
+fail: list[str] = []
 
 
 def read(path):

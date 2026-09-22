@@ -186,7 +186,9 @@ def main():
 
             target_name = m.group('file')
             if target_name is None:
-                target_text, target_list = text, [path]
+                # `target_list` is kept as part of the pair this branch assigns so both arms
+                # of the branch below produce the same two names; only `target_text` is read.
+                target_text, target_list = text, [path]  # noqa: F841
                 target_label = where
             else:
                 candidates = [c for c in by_name.get(target_name, [])

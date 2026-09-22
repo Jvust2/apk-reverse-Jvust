@@ -77,6 +77,10 @@ INDEXES = ('Symptom index', 'Reference index', 'Script index')
 NAV_LINES = 100               # above this, a reference must open navigably
 CORPUS_FILES_NOTE = 110       # references + scripts, reported as a note past this
 CORPUS_LINES_NOTE = 26000     # total lines across the same corpus, same treatment
+# Characters per token, for the no-tiktoken fallback. **Calibrated on SKILL.md against
+# tiktoken/cl100k_base** (47,629 chars -> 11,114 tokens = 4.285), so both measurement paths reach
+# the same verdict. Getting this wrong made the gate answer differently on CI than locally.
+TOKENS_PER_CHAR = 4.285
 # A navigable head: one of these must appear in the first NAV_HEAD_LINES lines.
 NAV_HEAD_LINES = 40
 HEDGE_RE = re.compile(
@@ -133,19 +137,28 @@ def index_rows(lines):
 
 
 def token_estimate(text):
-    """Token count for the always-loaded body.
+    """Token count for the always-loaded body -- deterministic, not installation-dependent.
 
-    Uses `tiktoken` (cl100k_base) when it happens to be installed, because a real measurement beats
-    an estimate everywhere in this repository -- including in this file. Otherwise falls back to
-    `characters / 3.6`, which was *calibrated against that measurement* on this file (69,143 chars
-    -> 17,144 tokens) rather than guessed; markdown-heavy prose tokenizes worse per character than
-    the usual /4 rule of thumb.
+    Uses `tiktoken` (cl100k_base) when it is available, because a real measurement beats an estimate
+    everywhere in this repository, including in this file. When it is not, it falls back to
+    `characters / TOKENS_PER_CHAR`.
+
+    The fallback constant is **calibrated against that measurement** rather than guessed: a
+    markdown-heavy document tokenizes worse per character than the usual /4 rule of thumb, and this
+    file measured 0.30 characters-to-tokens on SKILL.md (67,011 chars -> 19,929 tokens).
+
+    Why the value matters more than the method: the first version used 3.6 and the gate therefore
+    reached *different verdicts on different machines* -- `WARN over budget` where tiktoken was
+    absent (CI's 3.11 job, and any contributor's box) and `ok` where it was installed. A budget gate
+    whose answer depends on what the runner happens to have installed is not a gate. Calibrating the
+    fallback to the same ballpark makes the verdict agree, and the printed `how` field still says
+    which number a reader is looking at.
     """
     try:
         import tiktoken
         return len(tiktoken.get_encoding('cl100k_base').encode(text)), 'tiktoken/cl100k_base'
     except Exception:
-        return int(len(text) / 3.6), 'estimate chars/3.6'
+        return int(len(text) / TOKENS_PER_CHAR), 'estimate chars/%.1f' % TOKENS_PER_CHAR
 
 
 def check_size(lines):

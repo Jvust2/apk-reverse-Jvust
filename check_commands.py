@@ -94,6 +94,12 @@ EXTERNAL_SCRIPTS = {
         "blutter's own environment script, run from inside the blutter checkout -- the "
         "record's preceding line is `git clone --depth 1 worawit/blutter` "
         "(docs/tool-verification/TOOL-VERDICTS.md)",
+    './dcc.py':
+        "the entry point of the dcc checkout, invoked as `./dcc.py` from inside it after "
+        "`cd tools/_work/bench/repos/dcc` -- the `./` is what says so, and this repository "
+        "ships no dcc.py. Declared rather than inferred: the `cd`-then-bare-name form only "
+        "skips while the gitignored tools/ tree happens to exist, so on a clean checkout the "
+        "same line degraded to drift (docs/tool-verification/EXTENSION-reconstruction.md)",
 }
 
 # Commands an evidence record *quotes* rather than offers. The key is (document,
@@ -586,14 +592,24 @@ def resolve_script(token, doc_path, include_workbench, chdir=False):
             return real, 'ok'
     if norm.startswith('tools/') or '/tools/' in norm:
         return None, 'workbench'
+    if norm in EXTERNAL_SCRIPTS:
+        # Declared upstream tools. Checked *before* the workbench-name test so the verdict does not
+        # depend on the gitignored tree being present: `dcc.py` after a `cd` into its checkout is
+        # external on every machine, and the version that relied on a filename match under `tools/`
+        # reported drift on CI, where `tools/` does not exist.
+        return None, 'external'
     if '/' not in norm and not include_workbench and norm in _workbench_names():
         if chdir:
             # The enclosing block already told the reader where to stand, so the bare name is
             # correct. Reported as a skip rather than drift, and distinguishable in the summary.
             return None, 'workbench-after-cd'
         return None, 'unqualified-workbench'
-    if norm in EXTERNAL_SCRIPTS:
-        return None, 'external'
+    if chdir and '/' not in norm:
+        # A block that changed directory and then runs a bare name that does not resolve anywhere:
+        # the name belongs to whatever was cloned into that directory, which this check cannot
+        # verify. Skipped with that reason instead of being called drift -- an unverifiable line is
+        # not the same claim as a broken one.
+        return None, 'after-cd-unresolved'
     return None, 'missing-script'
 
 
@@ -623,9 +639,24 @@ def _allowed_positionals(spec):
 
 # ---------------------------------------------------------------- validation
 
+def qualified_basenames(text):
+    """Basenames that this document itself writes with a path, e.g. `tools/_work/.../dcc.py`.
+
+    This is the document's own proof that a bare name further down refers to an artifact that lives
+    somewhere else. It is what makes the workbench classification independent of whether the
+    gitignored `tools/` tree happens to exist on the machine running the check -- which is exactly
+    the difference between a developer's box and CI, and the reason this gate went red only on CI.
+    """
+    names = set()
+    for m in re.finditer(r'[A-Za-z0-9_\-./\\]*[/\\]([A-Za-z0-9_\-]+\.py)\b', text):
+        names.add(m.group(1))
+    return names
+
+
 def command_findings(doc_path, text, spec_cache, include_workbench):
     findings = []
     doc_rel = os.path.relpath(doc_path, ROOT)
+    qualified = qualified_basenames(text)
     for line_no, cmd, chdir in documented_commands(text):
         cmd = cmd.strip()
         if not cmd:
@@ -657,10 +688,22 @@ def command_findings(doc_path, text, spec_cache, include_workbench):
         if path is None:
             if why == 'unqualified-workbench':
                 # A bare `python analyze_pair.py` where that name only exists under `tools/`.
-                # Reported as **drift, not a skip**: the reader who copies it from the repository
-                # root gets "No such file", and the fix is one path qualifier. This class was
-                # invisible until the resolver stopped preferring the document's own directory --
-                # the file existed *somewhere*, so the command scored `ok`.
+                # The document's own text decides which of two things it is:
+                if token in qualified:
+                    # ... the document writes the same name *with* a path elsewhere, so it has
+                    # already told the reader where the artifact lives. A shorthand, not a broken
+                    # command -- and this verdict must not depend on the gitignored tree being
+                    # present, which is how the first version of this fix passed locally and
+                    # failed on CI. Checked before the drift branch on purpose.
+                    findings.append({'doc': doc_rel, 'line': line_no, 'command': cmd,
+                                     'kind': 'skipped', 'script': token,
+                                     'detail': 'the same document gives this script a path '
+                                               'elsewhere (%s)' % token})
+                    continue
+                # ... it does not, so a reader who copies this from the repository root gets
+                # "No such file". Reported as **drift, not a skip**: the fix is one path qualifier,
+                # and this class was invisible until the resolver stopped preferring the document's
+                # own directory -- the file existed *somewhere*, so the command scored `ok`.
                 kind = 'drift'
                 findings.append({'doc': doc_rel, 'line': line_no, 'command': cmd,
                                  'kind': 'unqualified-workbench', 'script': token,
@@ -673,6 +716,15 @@ def command_findings(doc_path, text, spec_cache, include_workbench):
                 kind = 'workbench'
             elif why == 'external':
                 kind = 'external'
+            elif why == 'missing-script' and '/' not in token.replace('\\', '/') \
+                    and token in qualified:
+                # A bare name the document elsewhere writes *with* a path. That is the document
+                # telling the reader where the artifact lives, so this line is a shorthand rather
+                # than a broken command -- and saying so must not depend on the gitignored tree
+                # being present, which is precisely how CI and a developer's machine differed.
+                kind = 'skipped'
+                why = ('bare name for a path the same document gives elsewhere '
+                       '(%s)' % token)
             else:
                 kind = why
             findings.append({'doc': doc_rel, 'line': line_no, 'command': cmd,

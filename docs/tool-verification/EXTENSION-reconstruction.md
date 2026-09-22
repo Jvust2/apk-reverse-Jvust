@@ -299,8 +299,12 @@ middle category is the one worth reading.
 
 **Not reproducible.** `python tests/run_tests.py -q` runs: `run_tests.py` forwards what it is given
 to pytest (`args = list(argv[1:]) or ["-q"]`), and its usage block documents exactly that. `dcc.py`
-is written as `cd tools/_work/bench/repos/dcc` then `python dcc.py ...` — an external checkout, not a
-script this repository ships.
+is an external checkout, not a script this repository ships — the form the record uses is:
+
+```
+$ cd tools/_work/bench/repos/dcc
+$ python ./dcc.py <SAMPLE_DIR>/baseline.apk --no-build --dynamic-register
+```
 
 **Real, and fixed.** Seven commands in two evidence records named a **workbench** script with no path
 at all (`$ python analyze_pair.py`, `b2_measure.py`, `ttd_attach.py`, `make_skeleton.py`). Those files
@@ -321,6 +325,27 @@ a stricter regex but a corrected resolution order plus a corrected classificatio
 3. The one honest exception is pinned too: a block that opens with `cd tools/_work/bench/repos/dcc`
    tells the reader where to stand, so a bare `python dcc.py` after it is correct. That is skipped as
    `workbench-after-cd`.
+
+### 2.6a The same gate failed on CI and passed locally, and the reason is worth keeping
+
+The first version of the fix above shipped and CI went red on `check_commands.py` — in both the 3.11
+and 3.13 jobs — while the identical command passed on the machine that wrote it. The difference is
+`tools/`: it is gitignored, so a clean checkout does not have it, and **recognition of a workbench
+artifact by filename required the tree to exist**. On the developer's box `dcc.py` matched a name
+under `tools/` and was skipped as `workbench-after-cd`; on CI nothing matched, it fell through to
+`missing-script`, and the gate reported drift for three quoted lines in this very file.
+
+Two lessons, both now enforced rather than remembered:
+
+- **A check whose verdict depends on a gitignored directory is not a check.** The classification is
+  now computed from the **document** as well: `qualified_basenames()` collects every `.py` the text
+  itself writes *with* a path, and a bare name that appears in that set is a shorthand the document
+  already explains — so it skips identically on a clean checkout and on a populated one.
+- **A gate that cannot be run in the same shape as CI will disagree with CI.** Reproduce the CI
+  condition locally before believing a green run: `mv tools /tmp/hidden && python check_commands.py`
+  is the whole experiment, and it takes seconds. That is what found this, after the fix had already
+  been pushed.
+
 
 **Two defects of this pass's own, found while fixing it.** A `--json` run printed the `RESULT=` token
 *after* the JSON document, so `--json | jq` failed with `Extra data`; the token is gone from that path

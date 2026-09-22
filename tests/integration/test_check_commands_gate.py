@@ -68,29 +68,84 @@ def test_a_path_qualified_workbench_reference_is_a_skip_not_drift(gate):
     """`tools/_work/...` is deliberate in an evidence record: a skip, reported with its reason."""
     name = _workbench_script_name(gate)
     doc = str(REPO_ROOT / "docs" / "tool-verification" / "EXTENSION-extraction-shell-bench.md")
-    _path, why = gate.resolve_script("tools/_work/somewhere/%s" % name, doc, include_workbench=False)
+    _path, why = gate.resolve_script("tools/_work/bench/unpack/b3/%s" % name, doc,
+                                     include_workbench=False)
     assert why == "workbench"
 
 
-def test_a_bare_name_after_a_cd_in_the_same_block_is_not_drift(gate):
-    """A block that says `cd tools/_work/bench/repos/dcc` tells the reader where to stand."""
-    name = _workbench_script_name(gate)
-    doc = str(REPO_ROOT / "docs" / "tool-verification" / "EXTENSION-java2c.md")
-    text = "```\n$ cd tools/_work/bench/repos/dcc\n$ python %s --no-build\n```\n" % name
+@pytest.fixture
+def fake_repo(gate, tmp_path, monkeypatch):
+    """A repository-shaped tree with its own workbench, so resolution can be tested anywhere.
+
+    This exists because the workbench-dependent tests above cannot run on a clean checkout: the
+    `tools/` tree is gitignored, so on CI they skip and the gate's most important property goes
+    unverified exactly where it matters. The tree built here has the layout the resolver assumes
+    (a root, a skill dir, a gitignored `tools/`) and nothing else.
+    """
+    root = tmp_path / "repo"
+    (root / "skills" / "apk-reverse" / "scripts").mkdir(parents=True)
+    (root / "docs" / "tool-verification").mkdir(parents=True)
+    (root / "tools" / "_work" / "bench").mkdir(parents=True)
+    (root / "README.md").write_text("# root\n", encoding="utf-8")
+    (root / "skills" / "apk-reverse" / "scripts" / "shipped.py").write_text(
+        '"""capability: x\n"""\nimport argparse\np = argparse.ArgumentParser()\n'
+        'p.add_argument("--flag")\n', encoding="utf-8")
+    (root / "tools" / "_work" / "bench" / "solo_in_workbench.py").write_text(
+        "print('x')\n", encoding="utf-8")
+    (root / "docs" / "tool-verification" / "record.md").write_text("# record\n", encoding="utf-8")
+
+    monkeypatch.setattr(gate, "ROOT", str(root))
+    monkeypatch.setattr(gate, "SKILL_DIR", str(root / "skills" / "apk-reverse"))
+    monkeypatch.setattr(gate, "SCRIPT_DIR", str(root / "skills" / "apk-reverse" / "scripts"))
+    gate._WORKBENCH_INDEX.clear()
+    yield root
+    gate._WORKBENCH_INDEX.clear()
+
+
+def test_resolution_order_is_root_then_skill_then_document(gate, fake_repo):
+    """The corrected order, asserted against a tree that exists on any machine."""
+    doc = str(fake_repo / "docs" / "tool-verification" / "record.md")
+    path, why = gate.resolve_script("README.md", doc, include_workbench=False)
+    assert why == "ok" and path.endswith("README.md")
+    path, why = gate.resolve_script("shipped.py", doc, include_workbench=False)
+    assert why == "ok" and path.endswith("shipped.py")
+
+
+def test_a_workbench_only_name_is_drift_and_a_qualified_one_is_not(gate, fake_repo):
+    doc = str(fake_repo / "docs" / "tool-verification" / "record.md")
+    path, why = gate.resolve_script("solo_in_workbench.py", doc, include_workbench=False)
+    assert (path, why) == (None, "unqualified-workbench")
+    path, why = gate.resolve_script("tools/_work/bench/solo_in_workbench.py", doc,
+                                    include_workbench=False)
+    assert (path, why) == (None, "workbench")
+
+
+def test_a_bare_name_the_document_paths_elsewhere_is_a_skip(gate, fake_repo):
+    """The fix that made the gate behave the same on CI as on a populated machine.
+
+    `solo_in_workbench.py` appears once bare and once with a path in the same document. The
+    document has already told the reader where it lives, so the bare line is a shorthand -- and
+    that verdict must not depend on the gitignored tree being visible, which is how the first
+    version of this fix passed locally and failed on CI.
+    """
+    doc = str(fake_repo / "docs" / "tool-verification" / "record.md")
+    text = ("Path: `tools/_work/bench/solo_in_workbench.py` explains it.\n\n"
+            "```\n$ python solo_in_workbench.py\n```\n")
     findings = gate.command_findings(doc, text, {}, False)
     kinds = [f["kind"] for f in findings]
     assert "unqualified-workbench" not in kinds, findings
-    assert "workbench-after-cd" in kinds, findings
+    assert "missing-script" not in kinds, findings
+    assert "skipped" in kinds, findings
 
 
-def test_a_shipped_script_resolves_from_the_repository_root(gate):
-    """The order that matters: root, then the skill's scripts, then the document's own directory."""
-    doc = str(REPO_ROOT / "docs" / "tool-verification" / "README.md")
-    path, why = gate.resolve_script("check_repo.py", doc, include_workbench=False)
-    assert why == "ok" and path and path.endswith("check_repo.py")
-    path, why = gate.resolve_script("skills/apk-reverse/scripts/scan_leaks.py", doc,
-                                    include_workbench=False)
-    assert why == "ok" and path and path.endswith("scan_leaks.py")
+def test_a_bare_name_after_cd_with_no_resolution_is_skipped_not_drift(gate, fake_repo):
+    """`cd <somewhere cloned>` then a bare name: unverifiable, and reported as such."""
+    doc = str(fake_repo / "docs" / "tool-verification" / "record.md")
+    text = "```\n$ cd tools/_work/bench/repos/elsewhere\n$ python upstream_tool.py --x\n```\n"
+    findings = gate.command_findings(doc, text, {}, False)
+    kinds = [f["kind"] for f in findings]
+    assert "missing-script" not in kinds, findings
+    assert "after-cd-unresolved" in kinds, findings
 
 
 def test_the_committed_tree_reports_no_drift(gate, tmp_path):

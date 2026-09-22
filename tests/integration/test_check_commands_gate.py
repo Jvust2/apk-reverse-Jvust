@@ -148,6 +148,39 @@ def test_a_bare_name_after_cd_with_no_resolution_is_skipped_not_drift(gate, fake
     assert "after-cd-unresolved" in kinds, findings
 
 
+def test_the_external_dcc_entry_point_is_never_drift(gate):
+    """`python dcc.py` after `cd tools/_work/bench/repos/dcc` runs inside the external dcc
+    checkout, so it is a skip on every machine -- including one without the workbench.
+
+    The name is declared in EXTERNAL_SCRIPTS because recognition by filename needs `tools/` to
+    exist: on a clean checkout `dcc.py` degraded to `missing-script` drift and the gate failed away
+    from the machine that wrote the record. Asserted as a *property* rather than as one specific
+    reason, because two mechanisms can legitimately produce it -- the declared entry point and the
+    workbench-after-`cd` rule -- and pinning either one alone makes the test machine-dependent,
+    which is the very defect it is guarding against.
+    """
+    doc = str(REPO_ROOT / "docs" / "tool-verification" / "EXTENSION-java2c.md")
+    _path, why = gate.resolve_script("dcc.py", doc, include_workbench=False, chdir=True)
+    assert why in ("external", "workbench-after-cd"), why
+
+    text = "```\n$ cd tools/_work/bench/repos/dcc\n$ python dcc.py --no-build\n```\n"
+    findings = gate.command_findings(doc, text, {}, False)
+    kinds = [f["kind"] for f in findings]
+    assert "missing-script" not in kinds, findings
+    assert "unqualified-workbench" not in kinds, findings
+    assert any(k in ("workbench-after-cd", "external") for k in kinds), findings
+
+
+def test_a_shipped_script_resolves_from_the_repository_root(gate):
+    """The order that matters: root, then the skill's scripts, then the document's own directory."""
+    doc = str(REPO_ROOT / "docs" / "tool-verification" / "README.md")
+    path, why = gate.resolve_script("check_repo.py", doc, include_workbench=False)
+    assert why == "ok" and path and path.endswith("check_repo.py")
+    path, why = gate.resolve_script("skills/apk-reverse/scripts/scan_leaks.py", doc,
+                                    include_workbench=False)
+    assert why == "ok" and path and path.endswith("scan_leaks.py")
+
+
 def test_the_committed_tree_reports_no_drift(gate, tmp_path):
     """The gate's own verdict on this repository, run in-process so it cannot drift silently."""
     docs = gate.collect_docs(None)

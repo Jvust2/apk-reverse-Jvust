@@ -94,12 +94,22 @@ EXTERNAL_SCRIPTS = {
         "blutter's own environment script, run from inside the blutter checkout -- the "
         "record's preceding line is `git clone --depth 1 worawit/blutter` "
         "(docs/tool-verification/TOOL-VERDICTS.md)",
+    # Both spellings of the same upstream entry point are declared, because the two records write
+    # it differently and each spelling has to stand on its own: `./dcc.py` (invoked from inside its
+    # checkout) and the bare `dcc.py` after a `cd` into it. Both are here for the same reason --
+    # the `cd`-then-bare-name form only skips while the gitignored `tools/` tree happens to exist,
+    # so recognition by filename alone reported drift on a clean checkout.
     './dcc.py':
         "the entry point of the dcc checkout, invoked as `./dcc.py` from inside it after "
         "`cd tools/_work/bench/repos/dcc` -- the `./` is what says so, and this repository "
-        "ships no dcc.py. Declared rather than inferred: the `cd`-then-bare-name form only "
-        "skips while the gitignored tools/ tree happens to exist, so on a clean checkout the "
-        "same line degraded to drift (docs/tool-verification/EXTENSION-reconstruction.md)",
+        "ships no dcc.py (docs/tool-verification/EXTENSION-reconstruction.md)",
+    'dcc.py':
+        "the dcc tool's own entry point, run from inside its checkout -- the record's "
+        "preceding line is `cd tools/_work/bench/repos/dcc`, and this repository ships "
+        "no dcc.py (docs/tool-verification/EXTENSION-java2c.md). Declared rather than "
+        "inferred because the `cd`-then-bare-name form only skips as workbench-after-cd "
+        "while the gitignored tools/ tree happens to exist locally; a clean checkout has "
+        "no such file to recognise, and without this entry the gate reported drift there.",
 }
 
 # Commands an evidence record *quotes* rather than offers. The key is (document,

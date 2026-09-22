@@ -56,12 +56,15 @@ python scripts/rasc_build.py --build            # needs git + rustup; ~2 min
 python scripts/rasc_build.py --verify app.apk   # compares class sets against droidasc, fails on a difference
 ```
 
-**The one thing to know before trusting its `getclass`:** an `enum` whose constants override an
-abstract method is printed as a bare constant list, and **the per-constant bodies are dropped with no
-warning**. Sampling 20 app-like classes from a real app, 17 were judged by the JADX-parity harness and
-16 agreed literal for literal; the one that differed was exactly this shape. So: use it to *locate*
-and to read ordinary classes, and confirm any enum that shows no bodies with a second reader. The
-measurements, the failing class and the build traps are in `references/rasc-and-droidsaw.md`.
+**The one thing to know before trusting its `getclass`:** on an `enum` whose constants override an
+abstract method, the outer class is printed as a bare constant list and the per-constant bodies are
+**not inlined** — no warning, and none in the Python tool either, because both leave those bodies in
+their own subclasses. They are one query away (`Lpkg/Enum$1;`, and both tools decompile those fully);
+`droidasc`'s outer-class listing is simply richer (2,170 B vs 314 B on the measured class, carrying
+`$VALUES`, `$values()` and the constructors). Sampling 20 app-like classes from a real app, 17 were
+judged by the JADX-parity harness and 16 agreed literal for literal; the one that differed was exactly
+this shape. Use it to *locate* and to read ordinary classes, and read the constants when an enum shows
+no bodies. The measurements and the failing class are in `references/rasc-and-droidsaw.md`.
 
 ### droidasc (ASC) — ask an APK "who references this?", in one query
 

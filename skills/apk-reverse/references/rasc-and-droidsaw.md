@@ -54,15 +54,16 @@ the ones a normal task hits.
 `python skills/apk-reverse/scripts/rasc_build.py --verify <apk>` reproduces the class-set comparison
 and is the check to run after any rebuild.
 
-## The blind spot: abstract enum constants lose their bodies
+## The blind spot: `getclass` on the outer enum does not inline the constant bodies
 
 `bench/jadx_parity.py` from the `rasc` repository compares **string literals** between JADX and `rasc`
 per class, counting a literal JADX has and `rasc` does not as a lost-code signal. Run here on a fair
 sample — app-like classes, no obfuscated identifiers, since the harness itself refuses to judge a
 class JADX cannot decompile — **20 classes picked, 17 judged, 1 with a difference, 0 reorderings**.
 
-The one difference is not a formatting artefact. `org.bouncycastle.crypto.PasswordConverter` is an
-enum whose constants each override an abstract method:
+The one difference is `org.bouncycastle.crypto.PasswordConverter`, an enum whose constants each
+override an abstract method. JADX inlines each constant's anonymous subclass; `rasc` prints the
+constant list:
 
 ```java
 // JADX
@@ -75,31 +76,45 @@ public enum PasswordConverter implements CharToByteConverter {
 ```
 
 ```java
-// rasc
+// rasc -- getclass on the OUTER class
 public enum PasswordConverter implements org.bouncycastle.crypto.CharToByteConverter {
-    ASCII,
-    UTF8,
-    PKCS12;
+    ASCII, UTF8, PKCS12;
     public PasswordConverter() { }
     public PasswordConverter(PasswordConverter$1 v3) { }
 }
 ```
 
-**Both the per-constant method bodies and the string literals are gone, and `rasc` emits no warning
-that anything was dropped.** The output is clean, plausible, and incomplete — the same failure shape
-`pitfalls.md` is a catalogue of. So the rule for this layer is a rule, not a preference:
+**What is actually lost, measured directly on the constants.** The bodies live in their own classes,
+so the question is whether they survive as their own classes. They do:
+
+| class | `rasc getclass` | `droidasc getclass` |
+|---|---|---|
+| `PasswordConverter$1` | 404 B, contains `convert(`/`getType(` | 460 B, contains both |
+| `PasswordConverter$2` | 407 B, contains both | 463 B, contains both |
+| `PasswordConverter$3` | 406 B, contains both | 462 B, contains both |
+
+So the correct severity is **a missing inlining step in the outer-class view, not unrecoverable code**:
+the source is one `getclass` away, on the anonymous subclass JADX names in its own comment
+(`// from class: ...PasswordConverter.1`). This reference said "the method bodies are gone" when this
+row was first written, and that was wrong — the subclasses were never queried. The two Python-visible
+symptoms are the same in both tools (neither inlines), so the difference here is JADX's convenience,
+not a `rasc` regression against the Python implementation.
+
+`droidasc`'s outer output is nevertheless richer than `rasc`'s for the same class — 2,170 B against
+314 B, carrying the synthetic `$VALUES`, `$values()` and the constructors explicitly — which matters
+when the enum's *shape* is the thing you are reading.
+
+The rule, now proportional to what was measured:
 
 - **Use `rasc getclass` for locating and reading ordinary classes.** That is what it was measured on.
-- **When the class is an `enum` with constant-specific bodies, confirm with a second reader**
-  (`droidasc getclass`, or JADX). A collapsed enum is visible on sight: the constants are printed as a
-  bare list and no method bodies follow. Treat "enum with no bodies" as *unverified output*, not as
-  "this enum has no logic".
-- **Never treat a single decompiler's output as the definition of what exists.** This is the same rule
-  the VMP section states about opcode tables, applied to a class body.
+- **When the class is an `enum` with constant-specific bodies, read the constants.** A collapsed enum
+  is visible on sight (bare constant list, no bodies). Either query the anonymous subclasses directly
+  (`Lpkg/Enum$1;`) or use `droidasc`, whose outer-class listing is more complete.
+- **Never treat a single decompiler's output as the definition of what exists.** The same rule the VMP
+  section states about opcode tables, applied to a class body.
 
-Frequency matters for calibration: 1 of 17 judged classes here, and the other 16 agreed literal for
-literal. So the correct posture is **adopt, with the cross-check kept**, not "reject" and not
-"drop the Python tool from the kit".
+Frequency for calibration: 1 of 17 judged classes here, and the other 16 agreed literal for literal.
+Adopt it, and keep the cross-check — but do not describe this as lost code.
 
 ## What it does not change
 

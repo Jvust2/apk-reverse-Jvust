@@ -11,7 +11,7 @@ that produced it.
 | It is faster than the Python `droidasc` on the same archives | **observed** | 4.0–5.6× for `classes`, up to 16.2× for `findrefs` (tables below) |
 | It returns the same answers | **observed** | **identical class-definition sets**, 30,768 / 30,768 with **0 differences in either direction**; `findrefs string` identical on one sample, `type` a superset (390 vs 384) |
 | Its `getclass` decompiles ordinary classes correctly | **observed** | 16 of 17 JADX-judged classes matched literal-for-literal, 0 reorderings |
-| **It silently drops the bodies of enum constants that override a method** | **observed** | `org.bouncycastle.crypto.PasswordConverter`: JADX emits three anonymous subclasses with `convert`/`getType`; `rasc` emits a bare constant list, **no warning** |
+| **Its outer-class view of an enum does not inline the constant bodies, and says nothing** | **observed — and the first write-up of this row over-claimed; see §The blind spot** | JADX inlines the three anonymous subclasses; `rasc` prints a bare constant list. Both tools decompile `PasswordConverter$1/2/3` **fully** (404–407 B, containing `convert`/`getType`), so what is missing is an inlining step, not the code |
 | Its own benchmark's 8.0× geometric mean reproduces here | **not reproduced, and explained** | that figure is from a 343 MiB / 567k-class archive; on a 34.8 MB / 30,768-class app the ratio is 4×. Both are real; the small-archive figure is what a normal task hits |
 
 ## Environment
@@ -102,12 +102,28 @@ missing      : ['ASCII', 'PKCS12', 'UTF8']
 VERDICT: form difference (enum constants printed as a list, literals not re-emitted)
 ```
 
-**The automated verdict understates it, and that is the finding.** The harness counts literals; the
-human check shows the literals are gone *because the whole anonymous subclass body is gone* — JADX
-prints `ASCII { ... convert() ... getType() ... }` and `rasc` prints `ASCII,`. `rasc` emits no
-comment, no TODO, no warning. Output that is clean, plausible and incomplete is the failure shape this
-repository's `pitfalls.md` exists to catalogue, so the consequence is a rule, not a caveat: confirm an
-enum with no bodies using a second reader.
+**The automated verdict understates it, and the hand check then overstated it. Both corrections are
+kept.** The harness counts literals, and the literals in JADX's output belong to the anonymous
+subclasses it inlines; `rasc`'s outer-class view prints a bare constant list. The first write-up here
+said "the method bodies are gone". **That was wrong, and the way it was wrong is worth recording: the
+subclasses were never queried.** They exist as their own classes and both tools decompile them fully:
+
+```
+$ rasc getclass    <apk> 'Lorg/bouncycastle/crypto/PasswordConverter$1;'   -> 404 B, has convert(/getType(
+$ droidasc getclass <apk> 'Lorg/bouncycastle/crypto/PasswordConverter$1;'   -> 460 B, has both
+$ ... $2 and $3 the same shape, 406-407 B vs 462-463 B
+```
+
+So the accurate finding is narrower than the first version and narrower than the harness's phrasing:
+**`rasc` does not inline enum-constant bodies into the outer class view, and it does not say so** —
+the bodies are one `getclass` away, on the subclass JADX itself names in a comment
+(`// from class: ...PasswordConverter.1`). Neither does the Python tool inline; `droidasc`'s outer
+listing is just richer (2,170 B vs 314 B, with `$VALUES`, `$values()` and the constructors explicit).
+
+The general lesson this left behind, and the reason the episode stays in the record: a harness that
+counts one artefact (literals) can point at a real difference while misdescribing it, and a hand
+check that stops at the first comparison can convert that into an overstated claim. The corrective was
+to query the classes the tool we were comparing against had named — which cost one command.
 
 ## Not established
 
